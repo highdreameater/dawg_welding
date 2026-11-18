@@ -9,3 +9,8 @@ __pycache__/
 .DS_Store
 .vscode/
 .idea/
+
+# legged_gym training outputs / server deps
+locomotion/legged_gym/logs/
+locomotion/deps/
+*.egg-info/

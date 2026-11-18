@@ -11,7 +11,8 @@ RL locomotion (trot / stairs, arm stowed = static payload)  ->  reach goal
 |---|---|
 | Robot model: ANYmal-C + Unitree Z1 + welding torch | done (`sim/wbc/robots.py`) |
 | Stance whole-body controller (QP) | done (`sim/wbc/stance_wbc.py`) |
-| RL locomotion with arm payload | planned: warm-start from the Isaac Lab ANYmal rough-terrain checkpoints in `policies/anymal/`, with a curriculum that raises the arm mass step by step to the real value (cloud GPU) |
+| RL locomotion, quadruped only (ETH legged_gym, `anymal_c_rough`) | training scripts ready (`locomotion/`), to run on a GPU server |
+| RL locomotion with arm payload | planned: start from the trained ANYmal-C policy, with a curriculum that raises the arm mass step by step to the real value |
 | RL ↔ WBC hand-off | planned (WBC already starts from the Isaac Lab ANYmal-C default stance) |
 
 ## Setup
@@ -57,6 +58,7 @@ All runs had no falls and no QP failures. Videos, plots and tables are in `resul
 | `sim/wbc/robots.py` | robot config + model builder (Menagerie ANYmal-C + Z1 + torch + workpiece, torque motors) |
 | `sim/wbc/stance_wbc.py` | stance WBC (QP), IK, helpers |
 | `sim/stance_demo.py` | weld / stress scenarios, metrics, plots, video |
+| `locomotion/` | ETH legged_gym (ANYmal-C only) + server setup / train / export scripts; see `locomotion/README.md` |
 | `tools/export_rslrl_checkpoint.py` | RSL-RL `checkpoint.pt` → TorchScript actor `policy.pt` |
 | `policies/anymal/` | Isaac Lab pretrained rough-terrain checkpoints `Isaac-Velocity-Rough-Anymal-{C,D}-v0` (RL warm-start) |
 | `results/stance_wbc/anymal_c_z1/` | WBC results |
