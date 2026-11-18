@@ -1,0 +1,11 @@
+# external clones (fetched by scripts/setup_assets.sh)
+third_party/
+archive/spot/third_party/
+
+# runtime noise
+MUJOCO_LOG.TXT
+__pycache__/
+*.pyc
+.DS_Store
+.vscode/
+.idea/

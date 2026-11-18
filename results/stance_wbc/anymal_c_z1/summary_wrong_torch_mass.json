@@ -1,0 +1,21 @@
+[
+  {
+    "robot": "anymal_c_z1",
+    "scenario": "weld",
+    "torch_mass": 1.2,
+    "ctrl_torch_mass": 0.6,
+    "fell": false,
+    "base_pos_dev_max_mm": 0.4115328705871394,
+    "base_rot_dev_max_deg": 0.12528530038470506,
+    "base_vel_rms_mm_s": 0.20031331704650515,
+    "base_angvel_rms_deg_s": 0.056719777008633766,
+    "foot_slip_max_mm": 0.058664212678300104,
+    "peak_torque_frac": 0.5515044908018888,
+    "seam_ik_residual_mm": 0.0018417366899803386,
+    "qp_ms_mean": 0.20205613775601705,
+    "qp_ms_max": 0.6164170008560177,
+    "qp_failures": 0,
+    "torch_err_rms_mm": 0.3207020990969692,
+    "torch_err_max_mm": 1.0897907081816385
+  }
+]

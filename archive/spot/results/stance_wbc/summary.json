@@ -1,0 +1,38 @@
+[
+  {
+    "robot": "spot",
+    "scenario": "weld",
+    "torch_mass": 1.2,
+    "ctrl_torch_mass": 1.2,
+    "fell": false,
+    "base_pos_dev_max_mm": 0.2869796366196805,
+    "base_rot_dev_max_deg": 0.0035114251697258973,
+    "base_vel_rms_mm_s": 0.003263846488173993,
+    "base_angvel_rms_deg_s": 0.0005372143359247796,
+    "foot_slip_max_mm": 0.22185600558395863,
+    "peak_torque_frac": 0.7239409720717851,
+    "seam_ik_residual_mm": 0.004640499277647892,
+    "qp_ms_mean": 0.16967241299721536,
+    "qp_ms_max": 2.79341700115765,
+    "qp_failures": 0,
+    "torch_err_rms_mm": 0.015248995397699866,
+    "torch_err_max_mm": 0.02310278272511365
+  },
+  {
+    "robot": "spot",
+    "scenario": "stress",
+    "torch_mass": 1.2,
+    "ctrl_torch_mass": 1.2,
+    "fell": false,
+    "base_pos_dev_max_mm": 0.2910361286517198,
+    "base_rot_dev_max_deg": 0.013092867625546976,
+    "base_vel_rms_mm_s": 0.03783823516496088,
+    "base_angvel_rms_deg_s": 0.023124965993713147,
+    "foot_slip_max_mm": 0.8072881496412373,
+    "peak_torque_frac": 0.8283702064967845,
+    "seam_ik_residual_mm": 0.004640499277647892,
+    "qp_ms_mean": 0.13089871919243404,
+    "qp_ms_max": 0.5595410002570134,
+    "qp_failures": 0
+  }
+]
