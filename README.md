@@ -19,6 +19,7 @@ the perception and the force task.
 | Path planning on the known map (A* + smoothing, no SLAM) + path follower | done (`sim/planning/`) |
 | Perception: head depth camera + cylinder fit (pipe position, direction, radius) | done (`sim/perception/`) |
 | Force control on a curved surface (hybrid force/motion in the WBC), optional touch-guided tracing | done (`sim/force_task.py`, `sim/force_demo.py`) |
+| Random freeform surface: wrist-camera scan, non-parametric reconstruction, force-controlled tracing | done (`sim/surface_task.py`, `sim/surface_demo.py`, `sim/perception/surface_fit.py`) |
 | Walking in MuJoCo: pretrained Isaac Lab Go2 / ANYmal-C rough policies, arm stowed as payload | done, sim-to-sim (`sim/locomotion/policy.py`) |
 | Go2 walking policy fine-tuned with the arm payload (PPO in MuJoCo, payload curriculum) | done, trained on this laptop (`sim/locomotion/train_payload.py`, `policies/go2/go2_z1_payload/`) |
 | Mission: plan → walk → scan → dock → force task → walk home | done (`sim/mission_demo.py`) |
@@ -68,6 +69,7 @@ A 10.5 m × 8 m workshop. The robot starts at (0, 0) facing +x. The same obstacl
 - **Pipe station:** a steel pipe (r = 0.15 m, 1.6 m long) on two saddles. This is the curved surface for force control. The robot docks head-on at its end, `cfg.pipe_work_dist` behind the work arc (Go2: 0.46 m, head 4 cm short of the pipe end; ANYmal-C: 0.56 m, nose over the low pipe end).
 - **Map vs reality:** `workshop(pipe_dx, pipe_dy, pipe_dyaw_deg, pipe_radius)` moves, turns and resizes the *real* pipe. The planner and the robot only know the map (`world.map_pipes`); the real pipe (`world.pipes`) has to be sensed.
 - **Beam station:** the flat beam with a straight seam (same geometry as `stance_demo.py`).
+- **Panel station:** a random freeform surface (`FreeformPanel`, 0.26 m × 0.5 m) on a stand. It is a seeded mix of Gaussian bumps and a wave, ±3 cm, slopes up to ~30°, with no closed-form shape. In MuJoCo it is a heightfield on a 4 mm grid, which matches the analytic surface within 0.04 mm. The map knows only the stand's footprint and nominal height. `workshop(panel_seed=…, panel_amp=…)` picks the surface.
 - **Geom groups:** the floor is group 0, the only thing the locomotion height scan sees (terrain). Obstacles and workpieces are group 1: the planner avoids them and the depth camera sees them. The robot is in groups 2/3. The pipe also has collision bit 2, so the force-control contact tip touches the pipe and nothing else.
 
 `build_model(cfg, world=workshop(), contact_tip=True)` adds the world and a frictionless ball tip (r = 8 mm) at the torch tip. The old stand-alone beam (`workpiece=True`) is unchanged for `stance_demo.py`.
@@ -140,24 +142,61 @@ python sim/force_demo.py --ctrl-torch-mass 0.6 --force-noise 0.3
 - Feeding the *measured* force into the dynamics is positive feedback, because the soft-contact force equals the applied push. It ran away to ~200 N.
 
 - **Contact-triggered timeline:** the sweep starts only after the tip has touched the surface; the approach keeps searching for up to 6 s more.
+- **Friction feed-forward uses the planned tool twist:** the Z1 has 1 Nm of Coulomb friction per joint, and the controller cancels it in the direction of planned motion. The plan must include the tool's *angular* velocity. Without it, the wrist joints' planned directions are wrong on a curving surface and the feed-forward *adds* friction. On the freeform panel that caused 36 % contact loss; with no friction in the arm the same run held 5.00 ± 0.16 N.
 
 Results on the Go2 (5 N target, 2 passes, 30 mm/s, during the sweep). The real pipe is moved 6 cm sideways and 4 cm along, turned 6°, and is 0.12 m instead of 0.15 m in radius. All accuracy metrics are measured against the *real* pipe:
 
 | robot believes | pipe estimate error | mean force | RMS force error | min / max | contact lost | arc on the real pipe (target ±30°) | tool axis vs real normal | base drift |
 |---|---|---|---|---|---|---|---|---|
-| the map | 63 mm, 6°, radius +30 mm | 4.96 N | 1.36 N | 0 / 7.6 N | 3 % | −49° … −6° | 31° RMS | 0.59 mm |
-| **depth camera** | **0.2 mm, 0.01°, radius +0.2 mm** | **5.02 N** | **0.42 N** | 3.3 / 6.3 N | **0 %** | **−30.1° … +29.7°** | **1.5° RMS** | 0.60 mm |
+| the map | 63 mm, 6°, radius +30 mm | 4.93 N | 1.02 N | 0 / 7.4 N | 3 % | −49.5° … −5.6° | 31° RMS | 0.51 mm |
+| **depth camera** | **0.2 mm, 0.01°, radius +0.2 mm** | **5.00 N** | **0.10 N** | 4.6 / 5.3 N | **0 %** | **−30.1° … +30.0°** | **0.34° RMS** | 0.25 mm |
 | depth camera + touch | same | 4.96 N | 0.58 N | 1.7 / 6.3 N | 0 % | −30.5° … +29.9° | 2.1° RMS | 0.60 mm |
 
 ANYmal-C + Z1 with the pipe as in the map (earlier run, `results/force_control/anymal_c_z1_map_model_v1.*`): 5.01 N mean, 0.27 N RMS error, 1.0° tool-axis error, 0.48 mm base drift.
 
 The force dips and peaks briefly at the sweep's acceleration and deceleration ramps. **Reach limit:** with the 0.27 m torch, the Z1 can hold the tool normal to the pipe up to about ±35° from the top. Beyond that the flange would have to climb out of the workspace. On the Go2 the Z1 is mounted 10 cm ahead of the base centre: the Go2 is 0.2 m lower than ANYmal-C, and over the centre the Z1 only reaches ~0.5 m ahead at pipe height.
 
+## Freeform surface: scan, reconstruct, trace (`sim/surface_demo.py`)
+At the panel station the robot traces an S-shaped path across a random surface it has never seen, pressing 5 N along the surface normal the whole way.
+```bash
+python sim/surface_demo.py                                   # Go2 + Z1, panel seed 0 -> results/surface/
+python sim/surface_demo.py --panel-seed 4                    # another random surface
+python sim/surface_demo.py --panel-seed 6 --panel-amp 0.04   # rougher (+-4 cm)
+python sim/surface_demo.py --perception flat                 # no scan: assume a flat panel at the map's height
+```
+1. **Scan with the arm** (`sim/surface_task.py`): brace, then hold the torch straight down over the panel centre. A **wrist depth camera** on the Z1 flange, looking along the torch, takes 10 frames from ~0.3 m. The Go2's head camera sees a low panel only at grazing angles.
+2. **Reconstruct** (`sim/perception/surface_fit.py`), with no parametric shape:
+   1. Crop to the stand's footprint.
+   2. Use 7.5 mm cells, keeping the top surface in each (median of the points within 6 mm of the cell's highest point).
+   3. Fit one global smoothing thin-plate spline.
+   4. Fit a bicubic spline on a 2.5 mm grid, giving C²-smooth heights and analytic normals.
+   5. A coverage mask says where the surface was actually seen.
+3. **Plan the path on the measured surface:** an S-curve along the panel (weaving ±3.5 cm). It picks the longest placement (length, weave, inset from the edge) whose every point is reachable with the tool normal to the surface *and* ≥ 0.12 rad from every joint limit; if none passes, it retries at 0.06 rad. Surfaces that lean too far away from the robot are refused before touching (seed 5 leans 30° away).
+4. **Trace:** the same hybrid force/motion control as on the pipe. Height, normal, curvature feed-forward and tool rotation rate all come from the reconstructed surface.
+
+Results (Go2 + Z1, 5 N, 2 passes over 0.4 m at 30 mm/s; errors against the true analytic surface, during the sweep):
+
+| surface | slope under the path (median / max) | model error along the path: height / normal | mean force | RMS force error | min / max | contact lost | tool axis vs true normal | path deviation (horizontal) |
+|---|---|---|---|---|---|---|---|---|
+| seed 0 | 12° / 19° | 0.03 mm / 0.19° | 5.00 N | 0.18 N | 4.4 / 6.2 N | 0 % | 0.24° RMS | 0.15 mm RMS |
+| seed 4 | 12° / 25° | 0.05 mm / 0.18° | 5.00 N | 0.22 N | 4.1 / 6.3 N | 0 % | 0.22° RMS | 0.21 mm RMS |
+| seed 4, flat panel assumed (no scan) | 12° / 25° | 9.7 mm / 14.7° | 5.02 N | 0.27 N | 4.0 / 6.3 N | 0 % | **14.8° RMS (max 25°)** | 0.21 mm RMS |
+
+Seeds 1, 2, 3 and a ±4 cm panel (seed 6) gave the same picture: 5.00 N ± 0.20–0.23 N, no contact loss, tool within 0.2–1.9° of the true normal.
+
+Force control alone finds an unknown surface and holds the force on it, as the flat-panel row shows. The scan is what keeps the tool **square to the surface**: 0.2° instead of up to 25° off.
+
+What it took:
+- **A global spline, not a local one:** `RBFInterpolator(neighbors=k)` is discontinuous between neighbourhoods. Its ~0.1 mm ripples felt like 3 Hz surface noise and the tip lost contact.
+- **C² interpolation:** bilinear slopes made the curvature feed-forward spike at every grid cell.
+- **The friction feed-forward fix** described under force control.
+
 ## Mission (`sim/mission_demo.py`)
 ```bash
 python sim/mission_demo.py                     # Go2 + fine-tuned policy, real pipe moved vs the map -> results/mission/
 python sim/mission_demo.py --loco go2          # pretrained Isaac Lab Go2 policy instead
 python sim/mission_demo.py --robot anymal_c_z1 --no-video
+python sim/mission_demo.py --station panel     # the random freeform surface instead of the pipe (--panel-seed, --panel-amp)
 ```
 1. Plan start → inspection pose on the map (A*).
 2. Walk there with the RL policy and the path follower.
@@ -173,9 +212,11 @@ Go2 + Z1, fine-tuned policy, real pipe 63 mm / 6° / 30 mm radius off the map:
 | plan + walk to the inspection pose (7.5 m) | 0.2 s planning, 24.5 s walking, within 36 mm / 0.8° |
 | scan + cylinder fit (10 frames, 0.3 s) | radius 120.3 mm (real 120), axis 0.03°, axis offset 0.4 mm, near end 0.9 mm |
 | dock on the measured pipe | 4.6 s, within 26 mm / 0.9° |
-| force pass | 5.02 N mean, 0.41 N RMS error, contact never lost, arc −30.2° … +29.6° on the real pipe, tool 1.5° RMS from the real normal, base drift 0.63 mm |
+| force pass | 5.00 N mean, 0.13 N RMS error (4.3–5.4 N), contact never lost, arc −30.2° … +29.9° on the real pipe, tool 0.39° RMS from the real normal, base drift 0.30 mm |
 | walk home (7.8 m) | 19.4 s, within 15 mm |
 | whole walk | no robot part other than the feet touched anything; max tilt 8°; velocity tracking 0.056 m/s RMS |
+
+With `--station panel` (Go2, panel seed 4): walk 9.4 m and dock within 36 mm (22 s) → wrist scan + reconstruction → full 0.4 m S-path at 5.00 N ± 0.21 N (3.8–6.3 N), contact never lost, tool 0.31° RMS from the true normal → walk home (within 27 mm), no obstacle contacts. Results: `results/mission/*_go2_z1_panel.*`.
 
 Earlier ANYmal-C run (pipe as in the map, no perception): `results/mission/*_anymal_c_z1_v1.*`.
 
@@ -189,10 +230,11 @@ Earlier ANYmal-C run (pipe as in the map, no perception): `results/mission/*_any
 | `sim/planning/` | occupancy grid + A* + smoothing (`grid_planner.py`), pure-pursuit / docking follower (`follower.py`) |
 | `sim/locomotion/policy.py` | Isaac Lab velocity policies in MuJoCo (ANYmal-C LSTM actuator net, Go2 DC-motor PD) |
 | `sim/locomotion/train_payload.py`, `eval_policy.py` | PPO fine-tuning with the arm payload (multi-process MuJoCo) and policy evaluation |
-| `sim/perception/` | head depth camera (`depth_camera.py`) and RANSAC + least-squares cylinder fit (`cylinder_fit.py`) |
+| `sim/perception/` | depth camera (`depth_camera.py`, head or wrist mount), RANSAC + least-squares cylinder fit (`cylinder_fit.py`), freeform surface reconstruction (`surface_fit.py`) |
+| `sim/surface_task.py`, `sim/surface_demo.py` | scan → reconstruct → force-controlled tracing of a random freeform surface |
 | `sim/force_task.py`, `sim/force_demo.py` | force-controlled pass on the pipe (task timeline, sensor, metrics, plots, video) |
 | `sim/mission_demo.py` | full mission: plan → walk → dock → force control → walk home |
-| `results/force_control/`, `results/mission/`, `results/locomotion/` | force-control, mission and walking-policy results |
+| `results/force_control/`, `results/surface/`, `results/mission/`, `results/locomotion/` | pipe force control, freeform surface, mission and walking-policy results |
 | `locomotion/` | ETH legged_gym (ANYmal-C only) + server setup / train / export scripts; see `locomotion/README.md` |
 | `tools/export_rslrl_checkpoint.py` | RSL-RL `checkpoint.pt` → TorchScript actor `policy.pt` |
 | `policies/anymal/` | Isaac Lab pretrained rough-terrain checkpoints `Isaac-Velocity-Rough-Anymal-{C,D}-v0` (RL warm-start) |

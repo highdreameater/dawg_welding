@@ -10,6 +10,8 @@
     python sim/mission_demo.py --loco go2                       # pretrained Isaac Lab Go2 policy instead
     python sim/mission_demo.py --perception map --pipe-dy 0     # no sensing, pipe exactly as in the map
     python sim/mission_demo.py --robot anymal_c_z1 --no-video
+    python sim/mission_demo.py --station panel                  # random freeform surface: dock, wrist scan, trace
+    python sim/mission_demo.py --station panel --panel-seed 3 --panel-amp 0.04
 
 Locomotion: sim/locomotion/policy.py (Isaac Lab velocity policies in MuJoCo; "go2_payload" = fine-tuned with the arm
 by sim/locomotion/train_payload.py). The map is known (sim/world.py) - no SLAM; the real pipe may differ from it.
@@ -30,11 +32,14 @@ from force_task import PipeForceTask  # noqa: E402
 from locomotion.policy import LOCO, ROBOT_LOCO, SIM_DT as RL_DT, VelocityPolicy  # noqa: E402
 from perception.cylinder_fit import check_estimate, fit_cylinder  # noqa: E402
 from perception.depth_camera import DepthCamera  # noqa: E402
+from perception.surface_fit import fit_surface  # noqa: E402
+from surface_demo import WRIST_CAM, metrics as surface_metrics  # noqa: E402
+from surface_task import SurfaceTraceTask  # noqa: E402
 from planning.follower import PathFollower, wrap  # noqa: E402
 from planning.grid_planner import OccupancyGrid, plan_path, resample  # noqa: E402
 from wbc.robots import ROBOTS, ROOT, build_model, controller_model  # noqa: E402
 from wbc.stance_wbc import Indexer, StanceWBC, initial_state  # noqa: E402
-from world import PIPE_WORK_X, WORLDS, pipe_dock_pose, pipe_inspect_pose  # noqa: E402
+from world import PIPE_WORK_X, WORLDS, panel_dock_pose, pipe_dock_pose, pipe_inspect_pose  # noqa: E402
 
 WBC_DT = 0.002
 FPS = 25
@@ -161,6 +166,60 @@ def force_phase(plant, ctrl, d, ix, cfg, belief, true_pipe, args, video):
     return force_metrics(L, task, wbc, plant, solve_ms, args, true_pipe)
 
 
+def surface_phase(plant, ctrl, d, ix, cfg, panel, args, video):
+    """Stance WBC at the panel: brace, wrist-camera scan, reconstruct, force-controlled S-path, stow."""
+    plant.opt.timestep = WBC_DT
+    prior = (panel.cx, panel.cy, panel.hx, panel.hy, panel.top_z)   # the map: stand footprint + nominal height
+    task = SurfaceTraceTask(cfg, ctrl, d.qpos.copy(), prior, f_des=args.force, passes=args.passes, speed=args.speed,
+                            t0=d.time)
+    wbc = StanceWBC(ctrl, cfg, **cfg.wbc_gains)
+    sensor = ForceSensor(plant, noise=args.force_noise)
+    cam = DepthCamera(plant, WRIST_CAM)
+    clouds, info, marks = [], {}, None
+    L = {k: [] for k in ["t", "f_raw", "f_des", "phase", "tip", "axis", "n_cmd", "u", "base_pos", "base_quat", "arm_q",
+                         "feet", "tau"]}
+    solve_ms, k = [], 0
+    while d.time < task.t0 + task.T:
+        t = d.time
+        ph = task.phase(t)
+        if ph == "scan" and t - task.t0 > task.start["scan"] + 0.4 and k % 10 == 0:
+            clouds.append(cam.capture(plant, d)[0])
+        if task.model is None and ph not in ("settle", "brace", "to_scan", "scan"):
+            c0 = time.perf_counter()
+            model = fit_surface(np.concatenate(clouds), prior[:4])
+            task.set_model(model)
+            info = dict(perception="wrist", frames=len(clouds), raw_points=int(sum(len(c) for c in clouds)),
+                        model=dict(model.info), model_ms=1000 * (time.perf_counter() - c0), path=task.path_choice)
+            marks = np.array([task.path_point(u)[0] for u in np.linspace(0, 1, 60)]) + [0, 0, 0.002]
+        f_meas = sensor.read(plant, d)
+        ref = task.ref(t, d.site_xpos[ix.tip].copy(), d.qpos[ix.arm_q].copy(), f_meas, sensor.vec.copy())
+        c0 = time.perf_counter()
+        tau, _ = wbc.compute(d.qpos.copy(), d.qvel.copy(), ref)
+        solve_ms.append(1000 * (time.perf_counter() - c0))
+        d.ctrl[:] = tau[ix.act_dof]
+        mujoco.mj_step(plant, d)
+        L["t"].append(t - task.t0); L["f_raw"].append(sensor.raw); L["phase"].append(task.phase(t))
+        L["f_des"].append(ref["force"]["f_des"] if "force" in ref else np.nan)
+        L["tip"].append(d.site_xpos[ix.tip].copy()); L["axis"].append(d.site_xmat[ix.tip].reshape(3, 3)[:, 0].copy())
+        L["n_cmd"].append(ref["force"]["n"] if "force" in ref else np.full(3, np.nan)); L["u"].append(task.u(t - task.t0))
+        L["base_pos"].append(d.qpos[0:3].copy()); L["base_quat"].append(d.qpos[3:7].copy())
+        L["arm_q"].append(d.qpos[ix.arm_q].copy())
+        L["feet"].append(d.geom_xpos[ix.feet].copy()); L["tau"].append(d.actuator_force.copy())
+        if video is not None and video.due(d.time):
+            p_ = L["phase"][-1]
+            video.cloud = ((clouds[-1][::3], [0.1, 1.0, 0.3, 1]) if clouds and p_ in ("scan", "to_hover")
+                           else (marks, [1.0, 0.85, 0.1, 1]) if marks is not None and p_ in ("hover", "approach", "sweep", "dwell")
+                           else None)
+            video.frame(d, f"MISSION  [stance WBC at the freeform panel: {p_}]  t={d.time:5.1f}s\n"
+                           f"F = {sensor.raw:5.2f} N (target {args.force:.1f})   wrist-camera scan -> thin-plate "
+                           f"spline -> force-controlled S-path", cam="work")
+        k += 1
+    if video is not None:
+        video.cloud = None
+    L = {k_: (np.array(x) if k_ != "phase" else np.array(x, dtype=object)) for k_, x in L.items()}
+    return surface_metrics(L, task, wbc, plant, solve_ms, panel, args, info)
+
+
 def plot_map(world, grid, paths, log, path_png, est=None):
     import matplotlib
     matplotlib.use("Agg")
@@ -209,6 +268,10 @@ def main():
     ap.add_argument("--loco", default="auto", help="locomotion policy (sim/locomotion/policy.py LOCO); auto: "
                                                    "go2_payload if trained, else the robot's pretrained policy")
     ap.add_argument("--world", choices=list(WORLDS), default="workshop")
+    ap.add_argument("--station", choices=["pipe", "panel"], default="pipe",
+                    help="pipe: curved pipe found by the head camera; panel: random freeform surface, wrist scan")
+    ap.add_argument("--panel-seed", type=int, default=4)
+    ap.add_argument("--panel-amp", type=float, default=0.03)
     ap.add_argument("--perception", choices=["map", "vision"], default="vision")
     ap.add_argument("--normal", choices=["model", "touch"], default="model")
     ap.add_argument("--pipe-dx", type=float, default=0.04)
@@ -226,7 +289,7 @@ def main():
     args = ap.parse_args()
     cfg = ROBOTS[args.robot]()
     world = WORLDS[args.world](pipe_dx=args.pipe_dx, pipe_dy=args.pipe_dy, pipe_dyaw_deg=args.pipe_dyaw,
-                               pipe_radius=args.pipe_radius)
+                               pipe_radius=args.pipe_radius, panel_seed=args.panel_seed, panel_amp=args.panel_amp)
     args.torch_mass = args.ctrl_torch_mass = 1.2
     if args.loco == "auto":
         args.loco = ROBOT_LOCO[args.robot]
@@ -243,16 +306,29 @@ def main():
     initial_state(plant, d, ix, xy=world.start[:2], yaw=world.start[2])
     pol = VelocityPolicy(plant, cfg, loco=args.loco)
     grid = OccupancyGrid(world)
-    wp = true_pipe.surface_point(PIPE_WORK_X, 0.0)[0]
-    video = None if args.no_video else Video(
-        plant, ix, dict(lookat=[*(wp[:2] - 0.2 * true_pipe.axis[:2]), wp[2] + 0.1], distance=1.5,
-                        azimuth=np.degrees(true_pipe.yaw) + 200, elevation=-22))
+    panel = world.panels[0]
+    if args.station == "panel":
+        work_cam = dict(lookat=[panel.cx - 0.12, panel.cy, panel.top_z + 0.1], distance=1.3, azimuth=215, elevation=-32)
+    else:
+        wp = true_pipe.surface_point(PIPE_WORK_X, 0.0)[0]
+        work_cam = dict(lookat=[*(wp[:2] - 0.2 * true_pipe.axis[:2]), wp[2] + 0.1], distance=1.5,
+                        azimuth=np.degrees(true_pipe.yaw) + 200, elevation=-22)
+    video = None if args.no_video else Video(plant, ix, work_cam)
     log, paths = [], []
-    summary = dict(robot=args.robot, loco=args.loco, perception=args.perception, normal=args.normal,
-                   pipe_vs_map=dict(dx=args.pipe_dx, dy=args.pipe_dy, dyaw_deg=args.pipe_dyaw, radius=true_pipe.radius))
+    summary = dict(robot=args.robot, loco=args.loco, station=args.station)
+    if args.station == "panel":
+        summary.update(panel_seed=args.panel_seed, panel_amp=args.panel_amp)
+    else:
+        summary.update(perception=args.perception, normal=args.normal,
+                       pipe_vs_map=dict(dx=args.pipe_dx, dy=args.pipe_dy, dyaw_deg=args.pipe_dyaw,
+                                        radius=true_pipe.radius))
 
     # 1) plan on the map to the inspection pose (or straight to the map's docking pose without perception)
-    dock_map = pipe_dock_pose(map_pipe, cfg.pipe_work_dist)
+    if args.station == "panel":   # the panel's shape is sensed at the station (wrist camera): dock directly
+        args.perception = "map"
+        dock_map = panel_dock_pose(panel, cfg.pipe_work_dist)
+    else:
+        dock_map = pipe_dock_pose(map_pipe, cfg.pipe_work_dist)
     goal = pipe_inspect_pose(map_pipe, cfg.pipe_work_dist) if args.perception == "vision" else dock_map
     c0 = time.perf_counter()
     path, info = plan_path(grid, world.start[:2], goal[:2], goal[2])
@@ -299,10 +375,13 @@ def main():
     else:
         belief = map_pipe
 
-    # 4) hand-off to the stance WBC: force-controlled pass over the pipe
+    # 4) hand-off to the stance WBC: force-controlled pass over the pipe / the freeform panel
     if video:
         video.markers = []
-    summary["force"] = force_phase(plant, ctrl, d, ix, cfg, belief, true_pipe, args, video)
+    if args.station == "panel":
+        summary["surface"] = surface_phase(plant, ctrl, d, ix, cfg, panel, args, video)
+    else:
+        summary["force"] = force_phase(plant, ctrl, d, ix, cfg, belief, true_pipe, args, video)
 
     # 5) hand back to the RL policy and walk home
     if not args.no_return:
@@ -327,13 +406,13 @@ def main():
         speed_tracking_rms=float(np.sqrt(np.mean([np.sum((r["cmd"][:2] - r["v"][:2]) ** 2) for r in moving]))) if moving else None,
         total_time_s=float(d.time))
     print(json.dumps(summary, indent=1, default=float))
-    with open(os.path.join(out, f"summary_{args.robot}{args.tag}.json"), "w") as f:
+    name = f"{args.robot}{'_panel' if args.station == 'panel' else ''}{args.tag}"
+    with open(os.path.join(out, f"summary_{name}.json"), "w") as f:
         json.dump(summary, f, indent=2, default=float)
-    plot_map(world, grid, paths, log, os.path.join(out, f"map_{args.robot}{args.tag}.png"), est)
+    plot_map(world, grid, paths, log, os.path.join(out, f"map_{name}.png"), est)
     if video and video.frames:
         import imageio
-        imageio.mimsave(os.path.join(out, f"mission_{args.robot}{args.tag}.mp4"), video.frames, fps=FPS, quality=7,
-                        macro_block_size=1)
+        imageio.mimsave(os.path.join(out, f"mission_{name}.mp4"), video.frames, fps=FPS, quality=7, macro_block_size=1)
 
 
 if __name__ == "__main__":

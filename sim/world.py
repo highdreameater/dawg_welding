@@ -87,6 +87,74 @@ class Pipe(PipeGeometry):  # horizontal, near end centre at (x0, y, z), axis at 
 
 
 @dataclass
+class FreeformPanel:
+    """A random smooth surface (no closed-form shape) on a stand: z = top_z + f(x - cx, y - cy) over a
+    2 hx x 2 hy rectangle. f = random Gaussian bumps + a random wave, rescaled to +-amp; built in MuJoCo as a
+    heightfield (`res` grid). f and its gradient are evaluated analytically, which is the ground truth for scoring."""
+    name: str
+    cx: float
+    cy: float
+    hx: float
+    hy: float
+    top_z: float                # mean surface height
+    amp: float = 0.03           # max |height deviation|
+    seed: int = 0
+    res: float = 0.004          # heightfield grid [m]
+    rgba: list = field(default_factory=lambda: [0.55, 0.57, 0.6, 1])
+
+    def __post_init__(self):
+        rng = np.random.default_rng(self.seed)
+        k = 7
+        self._b = np.stack([rng.uniform(-self.hx, self.hx, k), rng.uniform(-self.hy, self.hy, k),
+                            rng.uniform(0.05, 0.10, k), rng.uniform(-1, 1, k)], 1)        # u0, v0, sigma, a
+        ang, lam = rng.uniform(0, np.pi), rng.uniform(0.25, 0.4)
+        self._w = (np.cos(ang) * 2 * np.pi / lam, np.sin(ang) * 2 * np.pi / lam, rng.uniform(0, 2 * np.pi), 0.35)
+        u, v = np.meshgrid(np.linspace(-self.hx, self.hx, 81), np.linspace(-self.hy, self.hy, 81))
+        raw = self._raw(u, v)
+        self._mean = raw.mean()
+        self._scale = self.amp / np.abs(raw - self._mean).max()
+
+    def _raw(self, u, v, grad=False):
+        f, fu, fv = 0.0, 0.0, 0.0
+        for u0, v0, sg, a in self._b:
+            g = a * np.exp(-((u - u0) ** 2 + (v - v0) ** 2) / (2 * sg ** 2))
+            f = f + g
+            fu, fv = fu - g * (u - u0) / sg ** 2, fv - g * (v - v0) / sg ** 2
+        ku, kv, ph, a = self._w
+        f = f + a * np.sin(ku * u + kv * v + ph)
+        c = a * np.cos(ku * u + kv * v + ph)
+        return (f, fu + c * ku, fv + c * kv) if grad else f
+
+    def height(self, x, y):
+        return self.top_z + self._scale * (self._raw(x - self.cx, y - self.cy) - self._mean)
+
+    def normal(self, x, y):
+        _, fu, fv = self._raw(x - self.cx, y - self.cy, grad=True)
+        n = np.stack(np.broadcast_arrays(-self._scale * fu, -self._scale * fv, np.ones_like(np.asarray(x, float))), -1)
+        return n / np.linalg.norm(n, axis=-1, keepdims=True)
+
+    def add_to(self, spec, wb):
+        ncol, nrow = int(round(2 * self.hx / self.res)) + 1, int(round(2 * self.hy / self.res)) + 1
+        X, Y = np.meshgrid(np.linspace(self.cx - self.hx, self.cx + self.hx, ncol),
+                           np.linspace(self.cy - self.hy, self.cy + self.hy, nrow))   # row index = y (MuJoCo order)
+        H = self.height(X, Y)
+        zlo, zhi = H.min(), H.max()             # MuJoCo re-normalises the elevation data to [0, 1]
+        hf = spec.add_hfield()
+        hf.name, hf.nrow, hf.ncol = self.name, nrow, ncol
+        hf.size = [self.hx, self.hy, zhi - zlo, 0.02]
+        hf.userdata = ((H - zlo) / (zhi - zlo)).ravel().tolist()
+        g = wb.add_geom()
+        g.name, g.type, g.hfieldname = self.name, mujoco.mjtGeom.mjGEOM_HFIELD, self.name
+        g.pos, g.rgba, g.group = [self.cx, self.cy, zlo], self.rgba, 1
+        g.contype = g.conaffinity = 3           # also touched by the contact tip (bit 2)
+        g.solref = [0.005, 1.0]
+        st = wb.add_geom()                      # stand under the slab
+        st.name, st.type, st.rgba, st.group = f"{self.name}_stand", mujoco.mjtGeom.mjGEOM_BOX, PAINT, 1
+        h = (zlo - 0.02) / 2
+        st.size, st.pos = [self.hx - 0.01, self.hy - 0.01, h], [self.cx, self.cy, h]
+
+
+@dataclass
 class Station:
     name: str
     base_xy: tuple         # where the base centre should stand (pipe: for ANYmal-C; see pipe_dock_pose)
@@ -122,6 +190,7 @@ class World:
     pipes: list                         # the real pipes (MuJoCo scene)
     stations: dict
     map_pipes: list = None              # the pipes as the map knows them (planner); default = the real ones
+    panels: list = field(default_factory=list)   # freeform surfaces (the map knows only their stand footprint)
     start: tuple = (0.0, 0.0, 0.0)      # robot start (x, y, yaw)
     wall_h: float = 1.2
 
@@ -159,6 +228,8 @@ class World:
                 c = p.end + sk * p.axis
                 s.size, s.pos, s.group = [0.05, 0.8 * p.radius, hz], [c[0], c[1], hz], 1
                 s.quat = [np.cos(p.yaw / 2), 0, 0, np.sin(p.yaw / 2)]
+        for pn in self.panels:
+            pn.add_to(spec, wb)
         light = wb.add_light()
         light.pos, light.dir = [(x0 + x1) / 2, (y0 + y1) / 2, 6.0], [0, 0, -1]
         light.type = mujoco.mjtLightType.mjLIGHT_DIRECTIONAL
@@ -172,11 +243,18 @@ class World:
         for p in (self.map_pipes or self.pipes):
             c = p.end + 0.5 * p.length * p.axis
             out.append(("box", c[0], c[1], p.length / 2, p.radius, p.yaw))
+        out += [("box", pn.cx, pn.cy, pn.hx, pn.hy, 0.0) for pn in self.panels]
         return out
 
 
-def workshop(pipe_dx=0.0, pipe_dy=0.0, pipe_dyaw_deg=0.0, pipe_radius=None):
-    """pipe_*: move / turn / resize the real pipe relative to the map (the robot only knows the map + its sensors)."""
+def panel_dock_pose(panel: FreeformPanel, work_dist):
+    """Base pose facing +x with the panel's near edge PIPE_WORK_X behind the work point `work_dist` ahead."""
+    return np.array([panel.cx - panel.hx + PIPE_WORK_X - work_dist, panel.cy, 0.0])
+
+
+def workshop(pipe_dx=0.0, pipe_dy=0.0, pipe_dyaw_deg=0.0, pipe_radius=None, panel_seed=0, panel_amp=0.03):
+    """pipe_*: move / turn / resize the real pipe relative to the map (the robot only knows the map + its sensors).
+    panel_seed / panel_amp: the random freeform surface at the "panel" station (the map knows only its stand)."""
     pipe = Pipe("pipe", x0=7.30, y=-2.30, z=0.17, length=1.60, radius=0.15)   # as in the map
     r = pipe.radius if pipe_radius is None else pipe_radius
     real = Pipe("pipe", x0=pipe.x0 + pipe_dx, y=pipe.y + pipe_dy, z=r + 0.02, length=pipe.length, radius=r,
@@ -195,7 +273,10 @@ def workshop(pipe_dx=0.0, pipe_dy=0.0, pipe_dyaw_deg=0.0, pipe_radius=None):
         Cylinder("gas_1", (7.00, 1.00), 0.12, 0.9, rgba=[0.15, 0.5, 0.25, 1]),
         Cylinder("gas_2", (7.00, 1.30), 0.12, 0.9, rgba=[0.15, 0.5, 0.25, 1]),
     ]
+    panel = FreeformPanel("panel", cx=8.33, cy=-0.60, hx=0.13, hy=0.25, top_z=0.31, amp=panel_amp, seed=panel_seed)
     stations = {
+        # random freeform surface on a stand, robot docks facing +x at its near edge
+        "panel": Station("panel", tuple(panel_dock_pose(panel, PIPE_WORK_DIST)[:2]), 0.0, "panel", panel),
         # work on the pipe top 8 cm in from its end; base centre 0.56 m behind that, facing +x (nose overhangs
         # the low pipe end by ~4 cm, ~7 cm above it)
         "pipe": Station("pipe", tuple(pipe_dock_pose(pipe, PIPE_WORK_DIST)[:2]), 0.0, "pipe", pipe),
@@ -203,7 +284,7 @@ def workshop(pipe_dx=0.0, pipe_dy=0.0, pipe_dyaw_deg=0.0, pipe_radius=None):
         "beam": Station("beam", (beam.center[0] - 0.70, beam.center[1]), 0.0, "beam", beam),
     }
     return World(bounds=(-1.5, 9.0, -4.0, 4.0), boxes=boxes, cylinders=cylinders, pipes=[real], stations=stations,
-                 map_pipes=[pipe])
+                 map_pipes=[pipe], panels=[panel])
 
 
 WORLDS = {"workshop": workshop}

@@ -219,6 +219,8 @@ class PipeForceTask:
             self.th_meas = th_m
         else:  # approach / sweep / dwell: force control along n
             p, v, a = fd(lambda tt: self.tip_ref(tt - self.t0), t)
-            task.update(ee_pos=p, ee_vel=v, ee_acc=a, force=dict(n=n, f_des=self.f_des, f_meas=f_meas))
+            _, ndot, _ = fd(lambda tt: self.pipe.surface_point(self.s_work, self.theta(tt - self.t0))[1], t)
+            task.update(ee_pos=p, ee_vel=v, ee_acc=a, ee_omega=np.cross(n, ndot),
+                        force=dict(n=n, f_des=self.f_des, f_meas=f_meas))
         r.update(task)
         return r

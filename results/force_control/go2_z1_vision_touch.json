@@ -7,7 +7,7 @@
     "axis_offset_mm": 0.211,
     "end_err_mm": -0.584
   },
-  "fit_ms": 262.1787000025506,
+  "fit_ms": 316.93230000382755,
   "cloud_inliers": 1537,
   "belief_vs_true": {
     "radius_err_mm": 0.209,
@@ -42,8 +42,8 @@
   "foot_slip_max_mm": 0.8993882170160149,
   "peak_torque_frac": 0.632522544360546,
   "arc_ik_residual_mm": 0.00838733238675366,
-  "qp_ms_mean": 0.4606262715186557,
-  "qp_ms_max": 2.4290000001201406,
+  "qp_ms_mean": 0.4645316753615513,
+  "qp_ms_max": 1.6135999976540916,
   "qp_failures": 0,
   "fell": false
 }

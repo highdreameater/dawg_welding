@@ -1,0 +1,56 @@
+{
+  "perception": "wrist",
+  "frames": 20,
+  "raw_points": 384000,
+  "model": {
+    "kind": "thin-plate spline",
+    "points": 287213,
+    "cells": 2186,
+    "coverage": 0.9276948590381426
+  },
+  "model_ms": 3268.9285000014934,
+  "path": {
+    "span_m": 0.4,
+    "weave_m": 0.035,
+    "inset_m": 0.1,
+    "min_joint_margin_rad": 0.12
+  },
+  "robot": "go2_z1",
+  "panel_seed": 4,
+  "panel_amp": 0.03,
+  "f_des": 5.0,
+  "passes": 2,
+  "speed_mm_s": 30.0,
+  "surface_slope_along_path_deg": [
+    12.2,
+    24.6
+  ],
+  "model_height_err_along_path_mm": {
+    "rms": 0.04821791666283706,
+    "max": 0.10127641736917825
+  },
+  "model_normal_err_along_path_deg": {
+    "rms": 0.18048210493160588,
+    "max": 0.4684903436352405
+  },
+  "sweep_f_mean": 5.004907602077702,
+  "sweep_f_rms_err": 0.22145826363673657,
+  "sweep_f_min": 4.055852965466537,
+  "sweep_f_max": 6.317105507065137,
+  "contact_lost_frac": 0.0,
+  "axis_err_vs_true_normal_deg": {
+    "rms": 0.21667130516466698,
+    "max": 0.5554525061603607
+  },
+  "path_xy_dev_mm": {
+    "rms": 0.20806268361076147,
+    "max": 0.6454139067732501
+  },
+  "base_pos_dev_max_mm": 0.40676377279183984,
+  "base_rot_dev_max_deg": 0.34163411334530536,
+  "foot_slip_max_mm": 0.9339405896227962,
+  "peak_torque_frac": 0.5251160273260316,
+  "qp_ms_mean": 0.5629605018851237,
+  "qp_failures": 0,
+  "fell": false
+}

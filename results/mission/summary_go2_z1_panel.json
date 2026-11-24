@@ -1,0 +1,96 @@
+{
+  "robot": "go2_z1",
+  "loco": "go2_payload",
+  "station": "panel",
+  "panel_seed": 4,
+  "panel_amp": 0.03,
+  "plan_out": {
+    "plan_ms": 310.26449999626493,
+    "length_m": 9.433656515688428,
+    "min_clearance_m": 0.4
+  },
+  "walk_out": {
+    "time_s": 22.364999999999835,
+    "docked": true,
+    "pos_err_mm": 35.522652082924346,
+    "yaw_err_deg": 0.6782512957632287
+  },
+  "surface": {
+    "perception": "wrist",
+    "frames": 20,
+    "raw_points": 384000,
+    "model": {
+      "kind": "thin-plate spline",
+      "points": 266940,
+      "cells": 2047,
+      "coverage": 0.8601753139066571
+    },
+    "model_ms": 3133.9981999990414,
+    "path": {
+      "span_m": 0.4,
+      "weave_m": 0.035,
+      "inset_m": 0.1,
+      "min_joint_margin_rad": 0.12
+    },
+    "robot": "go2_z1",
+    "panel_seed": 4,
+    "panel_amp": 0.03,
+    "f_des": 5.0,
+    "passes": 2,
+    "speed_mm_s": 30.0,
+    "surface_slope_along_path_deg": [
+      12.2,
+      24.6
+    ],
+    "model_height_err_along_path_mm": {
+      "rms": 0.07917544836736999,
+      "max": 0.4860168138245968
+    },
+    "model_normal_err_along_path_deg": {
+      "rms": 0.2116370424597838,
+      "max": 1.0872173004902097
+    },
+    "sweep_f_mean": 5.004875188186219,
+    "sweep_f_rms_err": 0.21008639951749533,
+    "sweep_f_min": 3.8116524250204495,
+    "sweep_f_max": 6.258400499651293,
+    "contact_lost_frac": 0.0,
+    "axis_err_vs_true_normal_deg": {
+      "rms": 0.31281974896652653,
+      "max": 1.3463971858243022
+    },
+    "path_xy_dev_mm": {
+      "rms": 0.21611628798161395,
+      "max": 0.7057603781589075
+    },
+    "base_pos_dev_max_mm": 0.5719342952471751,
+    "base_rot_dev_max_deg": 0.36615098333467216,
+    "foot_slip_max_mm": 0.741058319122875,
+    "peak_torque_frac": 0.48122988513417325,
+    "qp_ms_mean": 0.5480513535256881,
+    "qp_failures": 0,
+    "fell": false
+  },
+  "plan_home": {
+    "plan_ms": 206.22759999969276,
+    "length_m": 9.088915949601404,
+    "min_clearance_m": 0.45
+  },
+  "walk_home": {
+    "time_s": 21.88999999998009,
+    "docked": true,
+    "pos_err_mm": 27.23973720213784,
+    "yaw_err_deg": 0.9077678264306918
+  },
+  "walking": {
+    "min_clearance_m": 0.45,
+    "world_contacts": [],
+    "base_height_m": [
+      0.322,
+      0.354
+    ],
+    "tilt_max_deg": 9.572542121760057,
+    "speed_tracking_rms": 0.05411443246400057,
+    "total_time_s": 90.79900000000225
+  }
+}

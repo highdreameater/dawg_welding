@@ -292,7 +292,11 @@ class StanceWBC:
             if "force" in ref:  # force mode: the planned normal motion is the admittance velocity
                 n = np.asarray(ref["force"]["n"], float)
                 v_tip += (self.vn_des - n @ v_tip) * n
-            v_cmd[ix.arm_v] = np.linalg.pinv(Ja, rcond=1e-3) @ np.concatenate([v_tip, np.zeros(3)])
+            # planned tool twist: the reference linear velocity *and* angular velocity. Without the angular part
+            # (tool turning to follow a curved surface) the wrist joints' planned velocities - hence the friction
+            # feed-forward signs - are wrong, and the feed-forward adds friction instead of cancelling it.
+            w_tool = np.asarray(ref.get("ee_omega", np.zeros(3)), float)
+            v_cmd[ix.arm_v] = np.linalg.pinv(Ja, rcond=1e-3) @ np.concatenate([v_tip, w_tool])
         else:
             v_cmd[ix.arm_v] = ref["arm_qd"]
         tau[6:] += self.friction[6:] * np.tanh(v_cmd[6:] / self.v_eps)

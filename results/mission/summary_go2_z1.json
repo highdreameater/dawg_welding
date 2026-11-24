@@ -4,7 +4,7 @@
   "perception": {
     "frames": 10,
     "points": 192000,
-    "fit_ms": 295.54259999713395,
+    "fit_ms": 304.88790000526933,
     "inliers": 1800,
     "measured_radius_mm": 120.28402791117632,
     "radius_err_mm": 0.28402791117633497,
@@ -26,7 +26,7 @@
     "radius": 0.12
   },
   "plan_out": {
-    "plan_ms": 217.6841999971657,
+    "plan_ms": 206.76729999831878,
     "length_m": 7.518821092964481,
     "min_clearance_m": 0.6363961030678928
   },
@@ -51,40 +51,40 @@
     "torch_mass": 1.2,
     "ctrl_torch_mass": 1.2,
     "force_noise": 0.0,
-    "sweep_f_mean": 5.017872544795264,
-    "sweep_f_rms_err": 0.41069079794344004,
-    "sweep_f_min": 3.253975049700353,
-    "sweep_f_max": 6.2607360483369785,
+    "sweep_f_mean": 4.99753692793509,
+    "sweep_f_rms_err": 0.1267310444260049,
+    "sweep_f_min": 4.335786617213351,
+    "sweep_f_max": 5.357922498899499,
     "contact_lost_frac": 0.0,
     "approach_contact_s": 2.1940000000030047,
     "approach_f_peak": 5.906302487929812,
     "arc_on_real_pipe_deg": [
       -30.2,
-      29.6
+      29.9
     ],
-    "axis_err_vs_real_normal_rms_deg": 1.4637431013521855,
-    "axis_err_vs_real_normal_max_deg": 3.5513644921911856,
-    "axial_drift_rms_mm": 0.6728587373418646,
-    "base_pos_dev_max_mm": 0.6310639697031882,
-    "base_rot_dev_max_deg": 1.004365756472341,
-    "foot_slip_max_mm": 0.5039025721508484,
+    "axis_err_vs_real_normal_rms_deg": 0.3937439653212085,
+    "axis_err_vs_real_normal_max_deg": 0.7610197242863619,
+    "axial_drift_rms_mm": 0.13695184418489528,
+    "base_pos_dev_max_mm": 0.2980148121949238,
+    "base_rot_dev_max_deg": 0.3579913376281949,
+    "foot_slip_max_mm": 0.5112760729836534,
     "peak_torque_frac": 0.41833915674439576,
     "arc_ik_residual_mm": 0.000916393044490248,
-    "qp_ms_mean": 0.4614005794916601,
-    "qp_ms_max": 4.166400001849979,
+    "qp_ms_mean": 0.4727193101975633,
+    "qp_ms_max": 3.5751000032178126,
     "qp_failures": 0,
     "fell": false
   },
   "plan_home": {
-    "plan_ms": 154.04359999956796,
-    "length_m": 7.791013112410382,
+    "plan_ms": 159.82810000423342,
+    "length_m": 7.791013073179874,
     "min_clearance_m": 0.35000000000000003
   },
   "walk_home": {
     "time_s": 19.440000000001532,
     "docked": true,
-    "pos_err_mm": 15.246782793786146,
-    "yaw_err_deg": 1.4877441670352964
+    "pos_err_mm": 15.247011416572706,
+    "yaw_err_deg": 1.4875747271928461
   },
   "walking": {
     "min_clearance_m": 0.35000000000000003,
@@ -93,8 +93,8 @@
       0.322,
       0.352
     ],
-    "tilt_max_deg": 8.181934925913973,
-    "speed_tracking_rms": 0.056066890941741866,
+    "tilt_max_deg": 8.18180995825147,
+    "speed_tracking_rms": 0.05606722131808083,
     "total_time_s": 69.923000000021
   }
 }
