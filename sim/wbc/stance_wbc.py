@@ -49,10 +49,11 @@ class Indexer:
         self.arm_stow = np.asarray(cfg.arm_stow, float)
 
 
-def initial_state(m, d, ix: Indexer):
-    """Nominal stance with the arm stowed, base level and facing +x, feet exactly on the floor."""
+def initial_state(m, d, ix: Indexer, xy=(0.0, 0.0), yaw=0.0):
+    """Nominal stance with the arm stowed, base level at (x, y) facing `yaw`, feet exactly on the floor."""
     mujoco.mj_resetData(m, d)
-    d.qpos[3:7] = [1, 0, 0, 0]
+    d.qpos[0:2] = xy
+    d.qpos[3:7] = [np.cos(yaw / 2), 0, 0, np.sin(yaw / 2)]
     d.qpos[ix.leg_q] = ix.leg_q0
     d.qpos[ix.arm_q] = ix.arm_stow
     d.qpos[2] = 1.0
@@ -79,8 +80,14 @@ def site_quat(d, sid):
     return mat2quat(d.site_xmat[sid])
 
 
-def ik_arm(m, qpos_init, ix: Indexer, p_des, R_des, seed=None, iters=300):
-    """Damped-least-squares IK on the first 6 arm joints (base + legs frozen). Returns arm q and residual [m]."""
+def axis_error(R_cur, R_des):
+    """Rotation error that aligns only the tool x-axis (roll about the tool axis is free), world frame."""
+    return np.cross(R_cur[:, 0], R_des[:, 0])
+
+
+def ik_arm(m, qpos_init, ix: Indexer, p_des, R_des, seed=None, iters=300, axis_only=False):
+    """Damped-least-squares IK on the first 6 arm joints (base + legs frozen). Returns arm q and residual [m].
+    axis_only: only the tool x-axis direction is constrained (5-DoF task, e.g. a ball tip)."""
     d = mujoco.MjData(m)
     d.qpos[:] = qpos_init
     if seed is not None:
@@ -91,11 +98,14 @@ def ik_arm(m, qpos_init, ix: Indexer, p_des, R_des, seed=None, iters=300):
     for _ in range(iters):
         mujoco.mj_fwdPosition(m, d)
         ep = p_des - d.site_xpos[ix.tip]
-        er = d.site_xmat[ix.tip].reshape(3, 3) @ quat_err_local(q_des, site_quat(d, ix.tip))
+        Rc = d.site_xmat[ix.tip].reshape(3, 3)
+        er = axis_error(Rc, R_des) if axis_only else Rc @ quat_err_local(q_des, site_quat(d, ix.tip))
         e = np.concatenate([ep, 0.5 * er])
         if np.linalg.norm(e) < 1e-5:
             break
         mujoco.mj_jacSite(m, d, jp, jr, ix.tip)
+        if axis_only:
+            jr = (np.eye(3) - np.outer(Rc[:, 0], Rc[:, 0])) @ jr
         Jm = np.vstack([jp[:, cols], 0.5 * jr[:, cols]])
         dq = Jm.T @ np.linalg.solve(Jm @ Jm.T + 1e-4 * np.eye(6), e)
         d.qpos[ix.arm_q[:6]] = np.clip(d.qpos[ix.arm_q[:6]] + dq, ix.arm_lo[:6], ix.arm_hi[:6])
@@ -108,7 +118,8 @@ def ik_arm(m, qpos_init, ix: Indexer, p_des, R_des, seed=None, iters=300):
 class StanceWBC:
     def __init__(self, ctrl_model, cfg: RobotCfg, mu=0.6, f_min=5.0, f_max=800.0, solver="daqp",
                  w_base=100.0, w_post=1.0, kp_base=900.0, kd_base=60.0,
-                 kp_ee=900.0, kd_ee=60.0, ki_ee=0.0, kp_post=400.0, kd_post=40.0, kc=40.0):
+                 kp_ee=900.0, kd_ee=60.0, ki_ee=0.0, kp_post=400.0, kd_post=40.0, kc=40.0,
+                 kf=0.002, kv_n=60.0, vn_max=0.02, v_approach=0.015, f_contact=0.3, ff_ramp=0.2, ki_f=20.0):
         self.m = ctrl_model
         self.d = mujoco.MjData(ctrl_model)
         self.ix = Indexer(ctrl_model, cfg)
@@ -127,6 +138,15 @@ class StanceWBC:
         self.ki_ee = ki_ee
         self.ee_int = np.zeros(6)
         self.ee_int_max = 0.002                             # [m*s] / [rad*s] anti-windup clamp
+        # force control along the surface normal:
+        #   free space (F_meas < f_contact): approach along -n at v_approach
+        #   in contact: admittance vn_des = -kf (F_des - F_meas), |vn_des| <= vn_max, plus a feed-forward of the
+        #   desired contact force in the dynamics, ramped in over ff_ramp seconds after touch-down, plus an
+        #   integral of the force error (explicit PI force control: removes the steady-state force error)
+        self.kf, self.kv_n, self.vn_max = kf, kv_n, vn_max
+        self.v_approach, self.f_contact, self.ff_ramp = v_approach, f_contact, ff_ramp
+        self.ki_f, self.f_int = ki_f, 0.0
+        self.vn_des, self.f_ff = 0.0, 0.0
         # friction pyramid rows (per foot): fx-mu fz, -fx-mu fz, fy-mu fz, -fy-mu fz, -fz (<= -fmin), fz (<= fmax)
         G = []
         for k in range(4):
@@ -172,14 +192,53 @@ class StanceWBC:
             jpd, jrd = np.zeros((3, nv)), np.zeros((3, nv))
             mujoco.mj_jacDot(m, d, jpd, jrd, d.site_xpos[ix.tip], m.site_bodyid[ix.tip])
             Jde = np.vstack([jpd, jrd])
+            Rc = d.site_xmat[ix.tip].reshape(3, 3)
+            if ref.get("axis_only", False):
+                # only the tool axis direction is controlled (ball tip: roll about the axis is free) -> project the
+                # angular rows onto the plane normal to the tool axis
+                Pa = np.eye(3) - np.outer(Rc[:, 0], Rc[:, 0])
+                Je[3:], Jde[3:] = Pa @ Je[3:], Pa @ Jde[3:]
+                R_des = np.zeros(9)
+                mujoco.mju_quat2Mat(R_des, ref["ee_quat"])
+                e_rot = axis_error(Rc, R_des.reshape(3, 3))
+            else:
+                e_rot = Rc @ quat_err_local(ref["ee_quat"], site_quat(d, ix.tip))
             v_ee = Je @ qvel
-            e_rot = d.site_xmat[ix.tip].reshape(3, 3) @ quat_err_local(ref["ee_quat"], site_quat(d, ix.tip))
             e_pos = ref["ee_pos"] - d.site_xpos[ix.tip]
+            fc = ref.get("force")
+            if fc is not None:
+                # hybrid force/motion: position control in the tangent plane, force control along the normal n
+                # (n = outward surface normal; the surface pushes the tip with f_meas * n).
+                n = np.asarray(fc["n"], float)
+                P = np.eye(3) - np.outer(n, n)
+                e_pos = P @ e_pos
+                f_des, f_meas = fc["f_des"], fc["f_meas"]
+                in_contact = f_meas > self.f_contact
+                if in_contact or self.f_ff > 0:
+                    vn_des = float(np.clip(-self.kf * (f_des - f_meas), -self.vn_max, self.vn_max))
+                else:
+                    vn_des = -self.v_approach
+                a_n = n @ ref["ee_acc"] + self.kv_n * (vn_des - n @ v_ee[:3])  # curvature feed-forward + admittance
+                a_lin = P @ (ref["ee_acc"] + self.kd_ee * (ref["ee_vel"] - v_ee[:3])) + self.kp_ee * e_pos + a_n * n
+                # the desired contact force is an external force on the robot (surface pushes the tip with f n): it
+                # enters the floating-base dynamics, so the stance feet / base absorb the reaction. Feeding the
+                # *measured* force here instead would be positive feedback (soft contact force = applied push).
+                step = f_des * m.opt.timestep / self.ff_ramp
+                self.f_ff += float(np.clip((f_des if in_contact else 0.0) - self.f_ff, -step, step))
+                if in_contact:
+                    self.f_int = float(np.clip(self.f_int + self.ki_f * (f_des - f_meas) * m.opt.timestep, -f_des, f_des))
+                else:
+                    self.f_int *= 0.99  # contact lost: bleed the integral off
+                h = h - jpe.T @ ((self.f_ff + self.f_int) * n)
+                self.vn_des = vn_des
+                # the normal direction is force-controlled: drop any position integral along n (e.g. from hover)
+                self.ee_int[:3] = P @ self.ee_int[:3]
+            else:
+                self.f_ff = self.f_int = 0.0
+                a_lin = ref["ee_acc"] + self.kp_ee * e_pos + self.kd_ee * (ref["ee_vel"] - v_ee[:3])
             # integral action (with clamp) removes residual friction / model-mismatch offsets at the torch tip
             self.ee_int = np.clip(self.ee_int + np.concatenate([e_pos, e_rot]) * m.opt.timestep, -self.ee_int_max, self.ee_int_max)
-            a_des = np.concatenate([
-                ref["ee_acc"] + self.kp_ee * e_pos + self.kd_ee * (ref["ee_vel"] - v_ee[:3]),
-                self.kp_ee * e_rot - self.kd_ee * v_ee[3:]]) + self.ki_ee * self.ee_int
+            a_des = np.concatenate([a_lin, self.kp_ee * e_rot - self.kd_ee * v_ee[3:]]) + self.ki_ee * self.ee_int
             Ae = np.zeros((6, self.n)); Ae[:, :nv] = Je
             A_cost.append(Ae); b_cost.append(a_des - Jde @ qvel); w_cost.append(w_ee)
         else:
@@ -229,7 +288,11 @@ class StanceWBC:
         v_cmd = qvel + qdd * m.opt.timestep
         if w_ee > 0:
             Ja = Je[:, ix.arm_v]
-            v_cmd[ix.arm_v] = np.linalg.pinv(Ja, rcond=1e-3) @ np.concatenate([ref["ee_vel"], np.zeros(3)])
+            v_tip = np.array(ref["ee_vel"], float)
+            if "force" in ref:  # force mode: the planned normal motion is the admittance velocity
+                n = np.asarray(ref["force"]["n"], float)
+                v_tip += (self.vn_des - n @ v_tip) * n
+            v_cmd[ix.arm_v] = np.linalg.pinv(Ja, rcond=1e-3) @ np.concatenate([v_tip, np.zeros(3)])
         else:
             v_cmd[ix.arm_v] = ref["arm_qd"]
         tau[6:] += self.friction[6:] * np.tanh(v_cmd[6:] / self.v_eps)

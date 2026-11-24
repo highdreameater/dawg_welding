@@ -81,7 +81,13 @@ def anymal_c_z1():
 ROBOTS = {"anymal_c_z1": anymal_c_z1}  # Spot config lives in archive/spot/spot_robot_config.py
 
 
-def build_model(cfg: RobotCfg, torch_mass=1.2, workpiece=True, render_size=(1280, 720)):
+CONTACT_TIP_RADIUS = 0.008
+
+
+def build_model(cfg: RobotCfg, torch_mass=1.2, workpiece=True, render_size=(1280, 720), world=None, contact_tip=False):
+    """workpiece: the stand-alone beam of sim/stance_demo.py (ignored when `world` is given).
+    world: a sim/world.py World (walls, obstacles, stations) added to the scene.
+    contact_tip: a frictionless ball at the torch tip that touches the pipe (collision bit 2) - for force control."""
     spec = mujoco.MjSpec.from_file(cfg.scene_xml)
     spec.visual.global_.offwidth, spec.visual.global_.offheight = render_size
 
@@ -109,14 +115,23 @@ def build_model(cfg: RobotCfg, torch_mass=1.2, workpiece=True, render_size=(1280
     tb.name, tb.pos = "torch", [cfg.torch_pos, 0, 0]
     neck = tb.add_geom()
     neck.type, neck.fromto, neck.size = mujoco.mjtGeom.mjGEOM_CAPSULE, [0, 0, 0, cfg.torch_tip - 0.04, 0, 0], [0.022, 0, 0]
-    neck.mass, neck.contype, neck.conaffinity, neck.rgba = torch_mass, 0, 0, [0.75, 0.2, 0.15, 1]
+    neck.mass, neck.contype, neck.conaffinity, neck.rgba, neck.group = torch_mass, 0, 0, [0.75, 0.2, 0.15, 1], 2
     nozzle = tb.add_geom()
     nozzle.type, nozzle.fromto, nozzle.size = mujoco.mjtGeom.mjGEOM_CYLINDER, [cfg.torch_tip - 0.04, 0, 0, cfg.torch_tip - 0.005, 0, 0], [0.012, 0, 0]
-    nozzle.mass, nozzle.contype, nozzle.conaffinity, nozzle.rgba = 0.01, 0, 0, [0.8, 0.7, 0.3, 1]
+    nozzle.mass, nozzle.contype, nozzle.conaffinity, nozzle.rgba, nozzle.group = 0.01, 0, 0, [0.8, 0.7, 0.3, 1], 2
     tip = tb.add_site()
     tip.name, tip.pos, tip.size, tip.rgba = "torch_tip", [cfg.torch_tip, 0, 0], [0.006, 0, 0], [1, 0.4, 0, 1]
+    if contact_tip:
+        # ball tip centred so that its surface is at the torch_tip site (the site is the contact point on the work)
+        b = tb.add_geom()
+        b.name, b.type, b.size = "contact_tip", mujoco.mjtGeom.mjGEOM_SPHERE, [CONTACT_TIP_RADIUS, 0, 0]
+        b.pos, b.mass, b.group, b.rgba = [cfg.torch_tip - CONTACT_TIP_RADIUS, 0, 0], 0.005, 2, [0.9, 0.9, 0.95, 1]
+        b.contype = b.conaffinity = 2   # touches only geoms with bit 2 (the pipe), not the robot / floor
+        b.condim, b.priority = 1, 2     # frictionless normal contact (ball / roller tip)
 
-    if workpiece:
+    if world is not None:
+        world.add_to(spec)
+    elif workpiece:
         hx, hy, hz = cfg.workpiece_half
         g = spec.worldbody.add_geom()
         g.name, g.type = "workpiece", mujoco.mjtGeom.mjGEOM_BOX
@@ -142,3 +157,11 @@ def build_model(cfg: RobotCfg, torch_mass=1.2, workpiece=True, render_size=(1280
     model.opt.timestep = 0.002
     model.opt.integrator = mujoco.mjtIntegrator.mjINT_IMPLICITFAST
     return model
+
+
+def controller_model(cfg: RobotCfg, torch_mass=1.2):
+    """The WBC's private "belief" model: robot + torch only (no world geoms) with contacts disabled. The controller
+    only needs M, h and Jacobians; skipping collision detection makes its mj_forward much cheaper."""
+    m = build_model(cfg, torch_mass=torch_mass, workpiece=False, contact_tip=True)
+    m.opt.disableflags |= mujoco.mjtDisableBit.mjDSBL_CONTACT
+    return m

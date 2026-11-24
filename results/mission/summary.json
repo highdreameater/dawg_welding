@@ -1,0 +1,64 @@
+{
+  "robot": "anymal_c_z1",
+  "world": "workshop",
+  "plan_to_pipe": {
+    "plan_ms": 210.81019999837736,
+    "length_m": 7.462025531990181,
+    "raw_length_m": 7.969622388735157,
+    "expanded": 7324,
+    "min_clearance_m": 0.5
+  },
+  "walk_to_pipe": {
+    "time_s": 18.06500000000069,
+    "docked": true,
+    "dock_pos_err_mm": 37.849775533265316,
+    "dock_yaw_err_deg": 2.096388637671102
+  },
+  "force": {
+    "robot": "anymal_c_z1",
+    "f_des": 5.0,
+    "arc_deg": 30.0,
+    "passes": 2,
+    "speed_mm_s": 30.0,
+    "torch_mass": 1.2,
+    "ctrl_torch_mass": 1.2,
+    "force_noise": 0.0,
+    "sweep_f_mean": 5.014402500843198,
+    "sweep_f_rms_err": 0.281139279720489,
+    "sweep_f_min": 3.3326605904517916,
+    "sweep_f_max": 5.886175274255178,
+    "contact_lost_frac": 0.0,
+    "approach_contact_s": 2.435999999996156,
+    "approach_f_peak": 5.888775958423789,
+    "tan_err_rms_mm": 1.090775202682662,
+    "tan_err_max_mm": 3.9803734610511596,
+    "axis_err_rms_deg": 0.9967415424723179,
+    "axis_err_max_deg": 1.2178342850300228,
+    "base_pos_dev_max_mm": 0.5071933222002403,
+    "base_rot_dev_max_deg": 0.23874090247921903,
+    "foot_slip_max_mm": 0.08852846257788777,
+    "peak_torque_frac": 0.4614274785864213,
+    "arc_ik_residual_mm": 0.006695778987300076,
+    "qp_ms_mean": 0.477338411714989,
+    "qp_ms_max": 3.3981000015046448,
+    "qp_failures": 0,
+    "fell": false
+  },
+  "plan_home": {
+    "plan_ms": 184.57720000151312,
+    "length_m": 7.535128443659793,
+    "min_clearance_m": 0.55
+  },
+  "walk_home": {
+    "time_s": 21.29000000001089,
+    "docked": true,
+    "dock_pos_err_mm": 29.548419829629015,
+    "dock_yaw_err_deg": 0.4248265993850185
+  },
+  "walking": {
+    "min_clearance_m": 0.55,
+    "world_contacts": [],
+    "min_base_height_m": 0.5001448586613688,
+    "total_time_s": 62.827000000015516
+  }
+}
