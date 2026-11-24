@@ -1,0 +1,49 @@
+{
+  "perception": "vision",
+  "normal": "touch",
+  "estimate": {
+    "radius_err_mm": 0.209,
+    "axis_err_deg": 0.01,
+    "axis_offset_mm": 0.211,
+    "end_err_mm": -0.584
+  },
+  "fit_ms": 262.1787000025506,
+  "cloud_inliers": 1537,
+  "belief_vs_true": {
+    "radius_err_mm": 0.209,
+    "axis_err_deg": 0.01,
+    "axis_offset_mm": 0.211,
+    "end_err_mm": -0.584
+  },
+  "robot": "go2_z1",
+  "f_des": 5.0,
+  "arc_deg": 30.0,
+  "passes": 2,
+  "speed_mm_s": 30.0,
+  "torch_mass": 1.2,
+  "ctrl_torch_mass": 1.2,
+  "force_noise": 0.0,
+  "sweep_f_mean": 4.95716120843201,
+  "sweep_f_rms_err": 0.5834936797465547,
+  "sweep_f_min": 1.7484608839437077,
+  "sweep_f_max": 6.316276899525554,
+  "contact_lost_frac": 0.0,
+  "approach_contact_s": 2.0859999999994967,
+  "approach_f_peak": 5.73833824798474,
+  "arc_on_real_pipe_deg": [
+    -30.5,
+    29.9
+  ],
+  "axis_err_vs_real_normal_rms_deg": 2.060055419852909,
+  "axis_err_vs_real_normal_max_deg": 4.473048024363525,
+  "axial_drift_rms_mm": 0.6172131830001619,
+  "base_pos_dev_max_mm": 0.6034774639309409,
+  "base_rot_dev_max_deg": 1.116306780262538,
+  "foot_slip_max_mm": 0.8993882170160149,
+  "peak_torque_frac": 0.632522544360546,
+  "arc_ik_residual_mm": 0.00838733238675366,
+  "qp_ms_mean": 0.4606262715186557,
+  "qp_ms_max": 2.4290000001201406,
+  "qp_failures": 0,
+  "fell": false
+}

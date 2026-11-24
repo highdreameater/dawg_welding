@@ -37,6 +37,8 @@ class RobotCfg:
     sweep_amp: tuple = None     # stress test: per-arm-joint sweep amplitude [rad]
     wbc_gains: dict = field(default_factory=dict)  # StanceWBC kwargs overrides
     cam: dict = field(default_factory=lambda: dict(lookat=[0.5, 0, 0.3], distance=2.4, azimuth=140, elevation=-20))
+    pipe_work_dist: float = 0.56  # base centre -> force-control arc on the pipe (reach with a tilted torch) [m]
+    leg_passive: tuple = None     # (damping, frictionloss) override for the leg joints, e.g. to match the RL training sim
 
     @property
     def foot_names(self):
@@ -78,7 +80,43 @@ def anymal_c_z1():
     )
 
 
-ROBOTS = {"anymal_c_z1": anymal_c_z1}  # Spot config lives in archive/spot/spot_robot_config.py
+def go2_z1(mount_x=0.10):
+    """Unitree Go2 with a Unitree Z1 on top of the base, 10 cm ahead of the base centre. The arm + torch (5.6 kg) is
+    ~37% of the bare Go2's mass. Mounted over the centre the Z1 only reaches ~0.5 m ahead at pipe height (the Go2 is
+    0.2 m lower than ANYmal-C); +10 cm buys ~0.1 m of reach for a ~3 cm forward shift of the CoM."""
+    legs = ["FL", "FR", "RL", "RR"]
+    leg = [f"{l}_{j}_joint" for l in legs for j in ("hip", "thigh", "calf")]
+    # Isaac Lab UNITREE_GO2_CFG default joint pos (stance of the pretrained rough-terrain policy)
+    q0 = {}
+    for l in legs:
+        q0[f"{l}_hip_joint"] = 0.1 if l[1] == "L" else -0.1
+        q0[f"{l}_thigh_joint"] = 0.8 if l[0] == "F" else 1.0
+        q0[f"{l}_calf_joint"] = -1.5
+    tau = {j: (45.43 if "calf" in j else 23.7) for j in leg}  # Menagerie go2.xml / Go2 motor limits
+    z1 = ["joint1", "joint2", "joint3", "joint4", "joint5", "joint6"]
+    tau.update({"z1_" + j: (60.0 if j == "joint2" else 30.0) for j in z1})
+    return RobotCfg(
+        name="go2_z1",
+        scene_xml=os.path.join(MENAGERIE, "unitree_go2", "scene.xml"),
+        base_body="base", leg_joints=leg,
+        foot_bodies=[f"{l}_calf" for l in legs], foot_radius=0.022,
+        leg_q0=q0,
+        arm_joints=z1, arm_stow=np.array([0.0, 0.05, -0.05, 0.0, 0.0, 0.0]),
+        tau_limits=tau, torch_parent="z1_link06", torch_pos=0.06, torch_tip=0.21,
+        workpiece_x=0.48, workpiece_half=(0.08, 0.30, 0.15),  # beam face clears the Go2 head (x 0.335)
+        ik_seeds=[[0, 1.2, -1.2, -0.3, 0, 0], [0, 1.6, -1.6, 0.2, 0, 0], [0, 0.9, -0.6, -0.8, 0, 0]],
+        arm_xml=os.path.join(MENAGERIE, "unitree_z1", "z1.xml"), arm_mount=("base", (mount_x, 0.0, 0.057)),
+        pipe_work_dist=0.46,  # head (x 0.335) stops ~4 cm short of the pipe end; it cannot overhang the pipe
+        # Isaac Lab's Go2 has no passive joint damping/friction (only the PD's kd = 0.5). Menagerie's damping 2 /
+        # frictionloss 0.2 is 4x that damping and halves the pretrained policy's yaw tracking -> match Isaac Lab.
+        leg_passive=(0.0, 0.0),
+        arm_prefix="z1_", brace_dz=0.02, sweep_amp=(1.0, 0.35, 0.4, 0.5, 0, 0),
+        wbc_gains=dict(kp_ee=2500.0, kd_ee=100.0, ki_ee=8000.0),
+        cam=dict(lookat=[0.3, 0, 0.25], distance=1.8, azimuth=140, elevation=-20),
+    )
+
+
+ROBOTS = {"anymal_c_z1": anymal_c_z1, "go2_z1": go2_z1}  # Spot config lives in archive/spot/spot_robot_config.py
 
 
 CONTACT_TIP_RADIUS = 0.008
@@ -90,6 +128,8 @@ def build_model(cfg: RobotCfg, torch_mass=1.2, workpiece=True, render_size=(1280
     contact_tip: a frictionless ball at the torch tip that touches the pipe (collision bit 2) - for force control."""
     spec = mujoco.MjSpec.from_file(cfg.scene_xml)
     spec.visual.global_.offwidth, spec.visual.global_.offheight = render_size
+    for k in list(spec.keys):  # keyframes (e.g. Go2 "home") no longer match once the arm is attached
+        spec.delete(k)
 
     if cfg.arm_xml:  # mount the arm on the quadruped
         arm = mujoco.MjSpec.from_file(cfg.arm_xml)
@@ -154,6 +194,10 @@ def build_model(cfg: RobotCfg, torch_mass=1.2, workpiece=True, render_size=(1280
         a.ctrllimited = a.forcelimited = mujoco.mjtLimited.mjLIMITED_TRUE
 
     model = spec.compile()
+    if cfg.leg_passive is not None:
+        for j in cfg.leg_joints:
+            dof = model.jnt_dofadr[mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, j)]
+            model.dof_damping[dof], model.dof_frictionloss[dof] = cfg.leg_passive
     model.opt.timestep = 0.002
     model.opt.integrator = mujoco.mjtIntegrator.mjINT_IMPLICITFAST
     return model

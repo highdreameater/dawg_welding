@@ -15,7 +15,7 @@ import mujoco
 import numpy as np
 
 from wbc.stance_wbc import Indexer, ik_arm, mat2quat
-from world import PIPE_WORK_X
+from world import PIPE_WORK_X, pipe_frame
 
 PHASES = ["settle", "brace", "unstow", "hover", "approach", "sweep", "dwell", "lift", "stow", "hold"]
 
@@ -43,15 +43,18 @@ def fd(fun, t, h=1e-3):
 
 
 def tip_contact_force(m, d, geom_id):
-    """Normal contact force on the contact tip [N] (sum over its contacts) and the contact count."""
-    f, total, n = np.zeros(6), 0.0, 0
+    """Contact force on the contact tip: (normal force [N], contact count, world force vector on the tip).
+    The tip is frictionless, so the force vector points exactly along the surface normal at the contact."""
+    f, total, n, vec = np.zeros(6), 0.0, 0, np.zeros(3)
     for i in range(d.ncon):
         c = d.contact[i]
         if c.geom1 == geom_id or c.geom2 == geom_id:
             mujoco.mj_contactForce(m, d, i, f)
             total += f[0]
             n += 1
-    return total, n
+            normal = c.frame[:3]  # contact normal, from geom1 towards geom2
+            vec += f[0] * normal * (1.0 if c.geom2 == geom_id else -1.0)
+    return total, n, vec
 
 
 def tool_rotation(n, axis):
@@ -65,8 +68,14 @@ class PipeForceTask:
     HOVER = 0.03
 
     def __init__(self, cfg, ctrl_model, qpos0, pipe, f_des=5.0, theta_max=np.radians(30), passes=2,
-                 speed=0.03, t0=0.0):
+                 speed=0.03, t0=0.0, normal_source="model"):
+        """pipe: the geometry the robot *believes* (map, or a perception estimate).
+        normal_source: "model" - surface normal / arc from `pipe`;
+                       "touch" - once in contact, the surface normal is measured from the contact-force direction
+                                 and the arc angle is tracked from it (tactile surface following): only the
+                                 approach point, the pipe axis and the radius (for speed) come from `pipe`."""
         self.cfg, self.pipe, self.f_des, self.t0 = cfg, pipe, f_des, t0
+        self.normal_source, self.n_touch = normal_source, None
         ix = Indexer(ctrl_model, cfg)
         self.ix, self.stow = ix, ix.arm_stow
         # base: hold the hand-off position, level the attitude (keep heading) while bracing 4 cm down
@@ -79,7 +88,8 @@ class PipeForceTask:
         mujoco.mju_subQuat(self.level_err, self.base_quat_level, self.base_quat0)
         self.base_brace = self.base_pos0 - np.array([0, 0, cfg.brace_dz])
 
-        self.x_work = pipe.x0 + PIPE_WORK_X
+        self.s_work = PIPE_WORK_X  # axial position of the arc, from the near end
+        self.work_point = pipe.surface_point(self.s_work, 0.0)[0]
         self.theta_max, self.passes = theta_max, passes
         arc = 2 * theta_max * pipe.radius
         self.T_pass = max(3.0, arc / speed)
@@ -97,7 +107,7 @@ class PipeForceTask:
         # furthest from the joint limits), then check that the whole arc is reachable from it
         q_ik = qpos0.copy(); q_ik[0:3] = self.base_brace; q_ik[3:7] = self.base_quat_level
         th0 = self.theta(self.start["approach"])
-        p0, n0 = pipe.surface_point(self.x_work, th0)
+        p0, n0 = pipe.surface_point(self.s_work, th0)
         rng = np.random.default_rng(0)
         seeds = [np.array(s, float) for s in cfg.ik_seeds]
         seeds += [rng.uniform(0.9 * ix.arm_lo, 0.9 * ix.arm_hi) for _ in range(30)]
@@ -114,11 +124,13 @@ class PipeForceTask:
         self.q_hover = best
         q_arc, worst = best, 0.0
         for th in np.linspace(-theta_max, theta_max, 7):
-            p, n = pipe.surface_point(self.x_work, th)
+            p, n = pipe.surface_point(self.s_work, th)
             q_arc, res = ik_arm(ctrl_model, q_ik, ix, p, tool_rotation(n, pipe.axis), seed=q_arc, axis_only=True)
             worst = max(worst, res)
         self.arc_ik_residual_mm = 1000 * worst
         self.captured = {}
+        self.t_contact, self.t_last, self.wait_s = None, None, 0.0
+        self.max_wait = 6.0  # [s] the approach keeps searching for the surface at most this much longer
 
     # ------------------------------------------------------------------ timeline
     def phase(self, t):
@@ -138,10 +150,21 @@ class PipeForceTask:
         return -th + 2 * th * s if int(k) % 2 == 0 else th - 2 * th * s
 
     def tip_ref(self, tr):
-        return self.pipe.surface_point(self.x_work, self.theta(tr))[0]
+        return self.pipe.surface_point(self.s_work, self.theta(tr))[0]
 
     # ------------------------------------------------------------------ references for the WBC
-    def ref(self, t, tip_pos, arm_q, f_meas):
+    def ref(self, t, tip_pos, arm_q, f_meas, f_vec=None):
+        # contact-triggered timeline: the sweep starts only after the tip has been on the surface for 0.5 s; if the
+        # approach time runs out first, the task clock pauses (keeps approaching) for up to max_wait seconds
+        dt = 0.0 if self.t_last is None else t - self.t_last
+        self.t_last = t
+        if self.phase(t) == "approach":
+            if f_meas > 1.0:
+                self.t_contact = self.t_contact or t
+            if (t - self.t0 > self.start["sweep"] - dt and (self.t_contact is None or t - self.t_contact < 0.5)
+                    and self.wait_s < self.max_wait):
+                self.t0 += dt
+                self.wait_s += dt
         tr = t - self.t0
         ph = self.phase(t)
         n_arm = len(self.stow)
@@ -165,7 +188,7 @@ class PipeForceTask:
             return r
 
         th = self.theta(tr)
-        p_surf, n = self.pipe.surface_point(self.x_work, th)
+        p_surf, n = self.pipe.surface_point(self.s_work, th)
         quat = mat2quat(tool_rotation(n, self.pipe.axis))
         task = dict(w_ee=30.0, w_post=1e-4, arm_q=self.q_hover, ee_quat=quat, axis_only=True)
         if ph == "hover":
@@ -174,6 +197,26 @@ class PipeForceTask:
             p_l = self.captured.setdefault("lift_p", tip_pos.copy())
             f = lambda tt: p_l + min_jerk((tt - self.t0 - self.start["lift"]) / self.T_ph["lift"]) * 0.05 * n
             task["ee_pos"], task["ee_vel"], task["ee_acc"] = fd(f, t)
+        elif self.normal_source == "touch" and f_vec is not None and (f_meas > 1.0 or self.n_touch is not None):
+            # tactile surface following: normal from the contact force, arc angle measured from that normal. If the
+            # contact drops, keep the last measured normal (the WBC then re-approaches along it)
+            if f_meas > 1.0:
+                n_m = f_vec / np.linalg.norm(f_vec)
+                self.n_touch = n_m if self.n_touch is None else self.n_touch + 0.05 * (n_m - self.n_touch)
+            n = self.n_touch / np.linalg.norm(self.n_touch)
+            a = self.pipe.axis
+            up, side = pipe_frame(a)
+            th_m = np.arctan2(n @ side, n @ up)
+            t_dir = np.cross(n, a)                      # direction of increasing theta on the surface
+            th_r, dth, ddth = fd(lambda tt: self.theta(tt - self.t0), t)
+            r_est = self.pipe.radius
+            task.update(ee_quat=mat2quat(tool_rotation(n, a)),
+                        # tangential lag + axial offset (the normal direction is force-controlled)
+                        ee_pos=tip_pos + r_est * (th_r - th_m) * t_dir + (self.s_work - (tip_pos - self.pipe.end) @ a) * a,
+                        ee_vel=r_est * dth * t_dir,
+                        ee_acc=r_est * ddth * t_dir - r_est * dth ** 2 * n,  # incl. centripetal feed-forward
+                        force=dict(n=n, f_des=self.f_des, f_meas=f_meas))
+            self.th_meas = th_m
         else:  # approach / sweep / dwell: force control along n
             p, v, a = fd(lambda tt: self.tip_ref(tt - self.t0), t)
             task.update(ee_pos=p, ee_vel=v, ee_acc=a, force=dict(n=n, f_des=self.f_des, f_meas=f_meas))

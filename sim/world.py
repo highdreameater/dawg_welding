@@ -8,7 +8,9 @@ The world is fully known (no SLAM): the path planner reads the same obstacle lis
     station "beam" the flat beam with a straight seam used by sim/stance_demo.py
 
 Geom groups / collision bits:
-    world geoms: group 0 (seen by the locomotion height scan), contype = conaffinity = 1
+    floor:       group 0 - the only thing the locomotion height scan sees (terrain)
+    world geoms: group 1 - obstacles / workpieces (avoided by the planner, seen by the depth camera),
+                 contype = conaffinity = 1
     pipe:        contype = conaffinity = 3 -> also touched by the contact tip (bit 2, see robots.py)
 """
 from dataclasses import dataclass, field
@@ -39,34 +41,77 @@ class Cylinder:            # vertical
     rgba: list = field(default_factory=lambda: STEEL)
 
 
+def pipe_frame(axis):
+    """Unit vectors (up, side) perpendicular to a pipe axis: up = closest to world +z, side = up x axis."""
+    a = np.asarray(axis, float)
+    up = np.array([0.0, 0.0, 1.0]) - a[2] * a
+    up /= np.linalg.norm(up)
+    return up, np.cross(up, a)
+
+
+class PipeGeometry:
+    """Cylinder interface used by the force task. s = axial distance from the near end, theta = angle around the
+    axis (0 = top, > 0 towards `side`). Subclasses: Pipe (the world / map) and EstimatedPipe (perception)."""
+    end: np.ndarray            # centre of the near end (on the axis)
+    axis: np.ndarray           # unit, pointing from the near end into the pipe
+    radius: float
+
+    def normal(self, theta):
+        up, side = pipe_frame(self.axis)
+        return np.cos(theta) * up + np.sin(theta) * side
+
+    def surface_point(self, s, theta, offset=0.0):
+        """Point on the surface (plus `offset` along the normal) and the outward normal."""
+        n = self.normal(theta)
+        return self.end + s * self.axis + (self.radius + offset) * n, n
+
+
 @dataclass
-class Pipe:                # horizontal, axis along +x from x0 to x0 + length
+class Pipe(PipeGeometry):  # horizontal, near end centre at (x0, y, z), axis at heading `yaw`
     name: str
     x0: float
     y: float
     z: float               # axis height
     length: float
     radius: float
+    yaw: float = 0.0
     rgba: list = field(default_factory=lambda: STEEL)
 
     @property
     def axis(self):
-        return np.array([1.0, 0.0, 0.0])
+        return np.array([np.cos(self.yaw), np.sin(self.yaw), 0.0])
 
-    def surface_point(self, x, theta, offset=0.0):
-        """Point on the pipe surface (plus `offset` along the normal) at axial position x and angle theta
-        (theta = 0: top, > 0: towards +y). Returns (point, outward normal)."""
-        n = np.array([0.0, np.sin(theta), np.cos(theta)])
-        return np.array([x, self.y, self.z]) + (self.radius + offset) * n, n
+    @property
+    def end(self):
+        return np.array([self.x0, self.y, self.z])
 
 
 @dataclass
 class Station:
     name: str
-    base_xy: tuple         # where the base centre should stand
+    base_xy: tuple         # where the base centre should stand (pipe: for ANYmal-C; see pipe_dock_pose)
     base_yaw: float
     kind: str              # "pipe" (force control) or "beam" (stance weld)
-    work: object = None    # the workpiece geometry
+    work: object = None    # the workpiece geometry *as in the map* (the real one may differ, see World.pipes)
+
+
+def pipe_dock_pose(pipe: PipeGeometry, work_dist):
+    """Base pose (x, y, yaw) facing along the pipe axis, `work_dist` behind the work arc (PIPE_WORK_X in)."""
+    a = np.array([pipe.axis[0], pipe.axis[1]])
+    a /= np.linalg.norm(a)
+    xy = pipe.end[:2] + (PIPE_WORK_X - work_dist) * a
+    return np.array([xy[0], xy[1], np.arctan2(a[1], a[0])])
+
+
+def pipe_inspect_pose(pipe: PipeGeometry, work_dist, back=0.5, side=0.6):
+    """Where to stand to look at the pipe with a head camera: `back` behind and `side` to the left of the docking
+    pose, facing a point 0.35 m into the pipe. Head-on views see the curved surface only at grazing angles (the
+    Go2 camera is ~4 cm above the pipe top) and the cylinder fit fails; from the side it sees ~half the pipe."""
+    dock = pipe_dock_pose(pipe, work_dist)
+    a = np.array([np.cos(dock[2]), np.sin(dock[2])])
+    xy = dock[:2] - back * a + side * np.array([-a[1], a[0]])
+    look = pipe.end[:2] + 0.35 * a
+    return np.array([xy[0], xy[1], np.arctan2(look[1] - xy[1], look[0] - xy[0])])
 
 
 @dataclass
@@ -74,8 +119,9 @@ class World:
     bounds: tuple                       # (xmin, xmax, ymin, ymax) inner wall faces
     boxes: list
     cylinders: list
-    pipes: list
+    pipes: list                         # the real pipes (MuJoCo scene)
     stations: dict
+    map_pipes: list = None              # the pipes as the map knows them (planner); default = the real ones
     start: tuple = (0.0, 0.0, 0.0)      # robot start (x, y, yaw)
     wall_h: float = 1.2
 
@@ -94,23 +140,25 @@ class World:
             g = wb.add_geom()
             g.name, g.type, g.size, g.pos = b.name, mujoco.mjtGeom.mjGEOM_BOX, list(b.half), list(b.center)
             g.quat = [np.cos(b.yaw / 2), 0, 0, np.sin(b.yaw / 2)]
-            g.rgba = b.rgba
+            g.rgba, g.group = b.rgba, 1
         for c in self.cylinders:
             g = wb.add_geom()
             g.name, g.type = c.name, mujoco.mjtGeom.mjGEOM_CYLINDER
-            g.size, g.pos, g.rgba = [c.radius, c.height / 2, 0], [*c.xy, c.height / 2], c.rgba
+            g.size, g.pos, g.rgba, g.group = [c.radius, c.height / 2, 0], [*c.xy, c.height / 2], c.rgba, 1
         for p in self.pipes:
             g = wb.add_geom()
             g.name, g.type = p.name, mujoco.mjtGeom.mjGEOM_CYLINDER
-            g.fromto = [p.x0, p.y, p.z, p.x0 + p.length, p.y, p.z]
-            g.size, g.rgba = [p.radius, 0, 0], p.rgba
+            g.fromto = [*p.end, *(p.end + p.length * p.axis)]
+            g.size, g.rgba, g.group = [p.radius, 0, 0], p.rgba, 1
             g.contype = g.conaffinity = 3
             g.solref = [0.005, 1.0]  # steel: stiffer than the default contact
-            for k, xs in enumerate((p.x0 + 0.25, p.x0 + p.length - 0.25)):  # saddles
+            for k, sk in enumerate((0.25, p.length - 0.25)):  # saddles
                 s = wb.add_geom()
                 s.name, s.type, s.rgba = f"{p.name}_saddle{k}", mujoco.mjtGeom.mjGEOM_BOX, PAINT
                 hz = (p.z - 0.6 * p.radius) / 2
-                s.size, s.pos = [0.05, 0.8 * p.radius, hz], [xs, p.y, hz]
+                c = p.end + sk * p.axis
+                s.size, s.pos, s.group = [0.05, 0.8 * p.radius, hz], [c[0], c[1], hz], 1
+                s.quat = [np.cos(p.yaw / 2), 0, 0, np.sin(p.yaw / 2)]
         light = wb.add_light()
         light.pos, light.dir = [(x0 + x1) / 2, (y0 + y1) / 2, 6.0], [0, 0, -1]
         light.type = mujoco.mjtLightType.mjLIGHT_DIRECTIONAL
@@ -121,12 +169,18 @@ class World:
         """Obstacle footprints for the planner: ('box', cx, cy, hx, hy, yaw) / ('circle', cx, cy, r)."""
         out = [("box", b.center[0], b.center[1], b.half[0], b.half[1], b.yaw) for b in self.boxes]
         out += [("circle", c.xy[0], c.xy[1], c.radius) for c in self.cylinders]
-        out += [("box", p.x0 + p.length / 2, p.y, p.length / 2, p.radius, 0.0) for p in self.pipes]
+        for p in (self.map_pipes or self.pipes):
+            c = p.end + 0.5 * p.length * p.axis
+            out.append(("box", c[0], c[1], p.length / 2, p.radius, p.yaw))
         return out
 
 
-def workshop():
-    pipe = Pipe("pipe", x0=7.30, y=-2.30, z=0.17, length=1.60, radius=0.15)
+def workshop(pipe_dx=0.0, pipe_dy=0.0, pipe_dyaw_deg=0.0, pipe_radius=None):
+    """pipe_*: move / turn / resize the real pipe relative to the map (the robot only knows the map + its sensors)."""
+    pipe = Pipe("pipe", x0=7.30, y=-2.30, z=0.17, length=1.60, radius=0.15)   # as in the map
+    r = pipe.radius if pipe_radius is None else pipe_radius
+    real = Pipe("pipe", x0=pipe.x0 + pipe_dx, y=pipe.y + pipe_dy, z=r + 0.02, length=pipe.length, radius=r,
+                yaw=np.radians(pipe_dyaw_deg))
     beam = Box("beam", (7.40, 2.30, 0.15), (0.08, 0.30, 0.15), rgba=STEEL)
     boxes = [
         Box("crates_a", (2.40, 0.50, 0.45), (0.40, 0.70, 0.45)),
@@ -144,11 +198,12 @@ def workshop():
     stations = {
         # work on the pipe top 8 cm in from its end; base centre 0.56 m behind that, facing +x (nose overhangs
         # the low pipe end by ~4 cm, ~7 cm above it)
-        "pipe": Station("pipe", (pipe.x0 + PIPE_WORK_X - PIPE_WORK_DIST, pipe.y), 0.0, "pipe", pipe),
+        "pipe": Station("pipe", tuple(pipe_dock_pose(pipe, PIPE_WORK_DIST)[:2]), 0.0, "pipe", pipe),
         # same relative placement as sim/stance_demo.py (seam 0.70 m ahead of the base)
         "beam": Station("beam", (beam.center[0] - 0.70, beam.center[1]), 0.0, "beam", beam),
     }
-    return World(bounds=(-1.5, 9.0, -4.0, 4.0), boxes=boxes, cylinders=cylinders, pipes=[pipe], stations=stations)
+    return World(bounds=(-1.5, 9.0, -4.0, 4.0), boxes=boxes, cylinders=cylinders, pipes=[real], stations=stations,
+                 map_pipes=[pipe])
 
 
 WORLDS = {"workshop": workshop}
