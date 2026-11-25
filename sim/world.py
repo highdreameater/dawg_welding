@@ -7,8 +7,11 @@ The world is fully known (no SLAM): the path planner reads the same obstacle lis
     station "pipe" horizontal pipe (r = 0.15 m) on two saddles, axis along +x: curved surface for force control
     station "beam" the flat beam with a straight seam used by sim/stance_demo.py
 
+aruco_workshop(): the same workshop + a staircase, a vessel, a spherical tank and four ArUco markers (one per
+curved surface) for sim/aruco_mission.py. workshop() itself is unchanged.
+
 Geom groups / collision bits:
-    floor:       group 0 - the only thing the locomotion height scan sees (terrain)
+    floor:       group 0 - the only thing the locomotion height scan sees (terrain); stairs are group 0 too
     world geoms: group 1 - obstacles / workpieces (avoided by the planner, seen by the depth camera),
                  contype = conaffinity = 1
     pipe:        contype = conaffinity = 3 -> also touched by the contact tip (bit 2, see robots.py)
@@ -32,6 +35,19 @@ class Box:
     rgba: list = field(default_factory=lambda: CRATE)
 
 
+def ray_cylinder(o, d, c, a, r):
+    """Smallest t > 0 with o + t d on the infinite cylinder (point c on the axis, unit axis a, radius r); None if
+    the ray misses."""
+    o, d, c, a = (np.asarray(x, float) for x in (o, d, c, a))
+    w, dp = (o - c) - ((o - c) @ a) * a, d - (d @ a) * a
+    A, B, C = dp @ dp, 2 * w @ dp, w @ w - r * r
+    disc = B * B - 4 * A * C
+    if A < 1e-12 or disc < 0:
+        return None
+    ts = [t for t in ((-B - np.sqrt(disc)) / (2 * A), (-B + np.sqrt(disc)) / (2 * A)) if t > 1e-9]
+    return min(ts) if ts else None
+
+
 @dataclass
 class Cylinder:            # vertical
     name: str
@@ -39,6 +55,98 @@ class Cylinder:            # vertical
     radius: float
     height: float
     rgba: list = field(default_factory=lambda: STEEL)
+
+    # surface interface (used to place ArUco markers on it, see sim/markers.py)
+    @property
+    def axis(self):
+        return np.array([0.0, 0.0, 1.0])
+
+    def axis_point(self):
+        return np.array([self.xy[0], self.xy[1], 0.0])
+
+    def ray(self, o, d):
+        return ray_cylinder(o, d, self.axis_point(), self.axis, self.radius)
+
+    def normal_at(self, p):
+        v = np.asarray(p, float) - self.axis_point()
+        v[2] = 0.0
+        return v / np.linalg.norm(v)
+
+
+@dataclass
+class Ellipsoid:
+    """Axis-aligned ellipsoid (a sphere when all radii are equal): a doubly-curved surface, e.g. a vessel head or
+    a spherical tank standing on the floor."""
+    name: str
+    center: tuple
+    radii: tuple
+    rgba: list = field(default_factory=lambda: STEEL)
+
+    def ray(self, o, d):
+        c, r = np.asarray(self.center, float), np.asarray(self.radii, float)
+        oo, dd = (np.asarray(o, float) - c) / r, np.asarray(d, float) / r
+        A, B, C = dd @ dd, 2 * oo @ dd, oo @ oo - 1.0
+        disc = B * B - 4 * A * C
+        if disc < 0:
+            return None
+        ts = [t for t in ((-B - np.sqrt(disc)) / (2 * A), (-B + np.sqrt(disc)) / (2 * A)) if t > 1e-9]
+        return min(ts) if ts else None
+
+    def normal_at(self, p):
+        g = (np.asarray(p, float) - np.asarray(self.center, float)) / np.asarray(self.radii, float) ** 2
+        return g / np.linalg.norm(g)
+
+
+@dataclass
+class Staircase:
+    """A step-over staircase (terrain): `n_steps` steps up along its heading, a landing, and the same steps down.
+    Built as stacked boxes in geom group 0, so the locomotion height scan sees it like the floor. The planner treats
+    its footprint as not traversable (stair climbing with the arm on board is not validated, see the README)."""
+    name: str
+    start: tuple               # (x, y) of the bottom edge centre of the first step
+    yaw: float = 0.0           # direction of ascent
+    width: float = 1.0
+    n_steps: int = 2
+    rise: float = 0.10
+    tread: float = 0.30
+    landing: float = 0.6
+    rgba: list = field(default_factory=lambda: [0.55, 0.52, 0.45, 1])
+
+    @property
+    def length(self):
+        return 2 * self.n_steps * self.tread + self.landing
+
+    @property
+    def height(self):
+        return self.n_steps * self.rise
+
+    def center_xy(self):
+        a = np.array([np.cos(self.yaw), np.sin(self.yaw)])
+        return np.asarray(self.start, float) + 0.5 * self.length * a
+
+    def boxes(self):
+        """Stacked boxes (centre (3), half sizes (3)); box k spans the whole flight minus k treads at each end."""
+        c = self.center_xy()
+        out = []
+        for k in range(self.n_steps):
+            hl = 0.5 * self.length - k * self.tread
+            out.append((np.array([c[0], c[1], (k + 0.5) * self.rise]), np.array([hl, self.width / 2, self.rise / 2])))
+        return out
+
+
+@dataclass
+class ArucoMarker:
+    """A printed ArUco marker stuck on a curved surface (it bends with the surface, see sim/markers.py).
+    Placement on a vertical cylinder / ellipsoid: `azimuth_deg` (direction of the marker normal, world yaw) and
+    the centre height `z`. On a pipe: axial position `s` from the near end and angle `theta_deg` around the axis
+    (0 = top, > 0 towards the pipe's `side`)."""
+    id: int
+    surface: str               # name of a Cylinder / Pipe / Ellipsoid in the world
+    size: float = 0.12         # side of the black square [m] (plus a one-cell white quiet zone around it)
+    azimuth_deg: float = 0.0
+    z: float = 0.35
+    s: float = None
+    theta_deg: float = None
 
 
 def pipe_frame(axis):
@@ -64,6 +172,17 @@ class PipeGeometry:
         """Point on the surface (plus `offset` along the normal) and the outward normal."""
         n = self.normal(theta)
         return self.end + s * self.axis + (self.radius + offset) * n, n
+
+    def axis_point(self):
+        return np.asarray(self.end, float)
+
+    def ray(self, o, d):
+        return ray_cylinder(o, d, self.end, self.axis, self.radius)
+
+    def normal_at(self, p):
+        v = np.asarray(p, float) - self.end
+        v = v - (v @ self.axis) * self.axis
+        return v / np.linalg.norm(v)
 
 
 @dataclass
@@ -193,6 +312,16 @@ class World:
     panels: list = field(default_factory=list)   # freeform surfaces (the map knows only their stand footprint)
     start: tuple = (0.0, 0.0, 0.0)      # robot start (x, y, yaw)
     wall_h: float = 1.2
+    ellipsoids: list = field(default_factory=list)   # doubly-curved surfaces (vessels, spherical tanks)
+    stairs: list = field(default_factory=list)       # Staircase terrain (group 0; not traversable for the planner)
+    markers: list = field(default_factory=list)      # ArucoMarker, one per surface (NOT in the map: they are sensed)
+
+    def surface(self, name):
+        """The Cylinder / Pipe / Ellipsoid called `name` (the real one, not the map's)."""
+        for s in self.cylinders + self.pipes + self.ellipsoids:
+            if s.name == name:
+                return s
+        raise KeyError(f"no curved surface called {name!r}")
 
     # ------------------------------------------------------------------ MuJoCo
     def add_to(self, spec: mujoco.MjSpec):
@@ -230,6 +359,19 @@ class World:
                 s.quat = [np.cos(p.yaw / 2), 0, 0, np.sin(p.yaw / 2)]
         for pn in self.panels:
             pn.add_to(spec, wb)
+        for e in self.ellipsoids:
+            g = wb.add_geom()
+            g.name, g.type = e.name, mujoco.mjtGeom.mjGEOM_ELLIPSOID
+            g.size, g.pos, g.rgba, g.group = list(e.radii), list(e.center), e.rgba, 1
+        for st in self.stairs:
+            for k, (c, h) in enumerate(st.boxes()):
+                g = wb.add_geom()
+                g.name, g.type, g.size, g.pos = f"{st.name}_{k}", mujoco.mjtGeom.mjGEOM_BOX, list(h), list(c)
+                g.quat = [np.cos(st.yaw / 2), 0, 0, np.sin(st.yaw / 2)]
+                g.rgba, g.group = st.rgba, 0            # terrain: the locomotion height scan sees it
+        if self.markers:
+            from markers import add_markers       # needs OpenCV (marker images); only imported when used
+            add_markers(spec, self)
         light = wb.add_light()
         light.pos, light.dir = [(x0 + x1) / 2, (y0 + y1) / 2, 6.0], [0, 0, -1]
         light.type = mujoco.mjtLightType.mjLIGHT_DIRECTIONAL
@@ -244,7 +386,20 @@ class World:
             c = p.end + 0.5 * p.length * p.axis
             out.append(("box", c[0], c[1], p.length / 2, p.radius, p.yaw))
         out += [("box", pn.cx, pn.cy, pn.hx, pn.hy, 0.0) for pn in self.panels]
+        out += [("circle", e.center[0], e.center[1], max(e.radii[:2])) for e in self.ellipsoids]
+        out += [("box", *st.center_xy(), st.length / 2, st.width / 2, st.yaw) for st in self.stairs]
         return out
+
+    def map_objects(self):
+        """Labelled map entries (same footprints as footprints(), in the same order):
+        dict(name, kind = "obstacle" | "stairs", curved = has a curved side a marker could be on, footprint)."""
+        fps = self.footprints()
+        names = ([(b.name, False) for b in self.boxes] + [(c.name, True) for c in self.cylinders]
+                 + [(p.name, True) for p in (self.map_pipes or self.pipes)] + [(p.name, True) for p in self.panels]
+                 + [(e.name, True) for e in self.ellipsoids] + [(s.name, False) for s in self.stairs])
+        n_st = len(self.stairs)
+        return [dict(name=n, curved=c, footprint=fp, kind="stairs" if i >= len(fps) - n_st else "obstacle")
+                for i, ((n, c), fp) in enumerate(zip(names, fps))]
 
 
 def panel_dock_pose(panel: FreeformPanel, work_dist):
@@ -287,4 +442,32 @@ def workshop(pipe_dx=0.0, pipe_dy=0.0, pipe_dyaw_deg=0.0, pipe_radius=None, pane
                  map_pipes=[pipe], panels=[panel])
 
 
-WORLDS = {"workshop": workshop}
+ARUCO_IDS = {"column": 12, "vessel": 5, "sphere_tank": 37, "pipe": 23}   # surface -> marker id (DICT_4X4_50)
+
+
+def aruco_workshop(pipe_dx=0.0, pipe_dy=0.0, pipe_dyaw_deg=0.0, pipe_radius=None, panel_seed=0, panel_amp=0.03,
+                   marker_size=0.12):
+    """The workshop (same walls, obstacles, stations and map) plus a staircase, two doubly-curved surfaces and four
+    ArUco markers, one per curved surface, for sim/aruco_mission.py:
+
+        column       existing steel column (vertical cylinder, r 0.25)       marker 12, faces west (towards the start)
+        vessel       new upright vessel (ellipsoid 0.38 x 0.38 x 0.5)        marker  5, faces south-east
+        sphere_tank  new spherical tank (r 0.40), north wall                 marker 37, faces south
+        pipe         existing horizontal pipe (r 0.15), pipe station         marker 23, on its south flank (60 deg down
+                                                                              from the top): seen only from the south
+        stairs       a step-over staircase (2 x 10 cm steps, 0.6 m landing) on the direct route between the vessel
+                     and the column; the planner routes around it
+
+    The markers are not in the map: the robot has to find them with its camera."""
+    w = workshop(pipe_dx, pipe_dy, pipe_dyaw_deg, pipe_radius, panel_seed, panel_amp)
+    w.ellipsoids = [Ellipsoid("vessel", (-0.60, 3.05, 0.50), (0.38, 0.38, 0.50), rgba=[0.30, 0.45, 0.55, 1]),
+                    Ellipsoid("sphere_tank", (6.00, 3.40, 0.40), (0.40, 0.40, 0.40), rgba=[0.75, 0.75, 0.72, 1])]
+    w.stairs = [Staircase("stairs", start=(1.05, -1.00), yaw=np.pi / 2, width=0.9)]
+    w.markers = [ArucoMarker(ARUCO_IDS["column"], "column", marker_size, azimuth_deg=180.0, z=0.32),
+                 ArucoMarker(ARUCO_IDS["vessel"], "vessel", marker_size, azimuth_deg=-75.0, z=0.32),
+                 ArucoMarker(ARUCO_IDS["sphere_tank"], "sphere_tank", marker_size, azimuth_deg=-90.0, z=0.32),
+                 ArucoMarker(ARUCO_IDS["pipe"], "pipe", marker_size, s=0.45, theta_deg=-60.0)]
+    return w
+
+
+WORLDS = {"workshop": workshop, "aruco_workshop": aruco_workshop}

@@ -166,9 +166,15 @@ ROBOTS = {"anymal_c_z1": anymal_c_z1, "go2_z1": go2_z1, "go2_z1_official": go2_z
 
 CONTACT_TIP_RADIUS = 0.008
 
+
 def build_model(cfg: RobotCfg, torch_mass=1.2, workpiece=True, render_size=(1280, 720), world=None, contact_tip=False,
-                scene_fn=None):
-    """scene_fn(spec): optional callback that adds world geometry (stairs, walls, ...) before compiling."""
+                scene_fn=None, cameras=None):
+    """workpiece: the stand-alone beam of sim/stance_demo.py (ignored when `world` is given).
+    world: a sim/world.py World (walls, obstacles, stations) added to the scene.
+    contact_tip: a frictionless ball at the torch tip that touches the pipe (collision bit 2) - for force control.
+    scene_fn(spec): optional callback that adds world geometry (stairs, walls, ...) before compiling.
+    cameras: optional robot-mounted MuJoCo cameras, dicts (name, body, pos, quat, fovy) - e.g. the head RGB camera
+             of sim/perception/aruco.py."""
     spec = mujoco.MjSpec.from_file(cfg.scene_xml)
     spec.visual.global_.offwidth, spec.visual.global_.offheight = render_size
     for k in list(spec.keys):  # keyframes (e.g. Go2 "home") no longer match once the arm is attached
@@ -214,6 +220,10 @@ def build_model(cfg: RobotCfg, torch_mass=1.2, workpiece=True, render_size=(1280
         b.pos, b.mass, b.group, b.rgba = [cfg.torch_tip - CONTACT_TIP_RADIUS, 0, 0], 0.005, 2, [0.9, 0.9, 0.95, 1]
         b.contype = b.conaffinity = 2   # touches only geoms with bit 2 (the pipe), not the robot / floor
         b.condim, b.priority = 1, 2     # frictionless normal contact (ball / roller tip)
+
+    for c in cameras or []:
+        cam = spec.body(c["body"]).add_camera()
+        cam.name, cam.pos, cam.quat, cam.fovy = c["name"], list(c["pos"]), list(c["quat"]), c["fovy"]
 
     if world is not None:
         world.add_to(spec)
