@@ -24,6 +24,7 @@ the perception and the force task.
 | Go2 walking policy fine-tuned with the arm payload (PPO in MuJoCo, payload curriculum) | done, trained on this laptop (`sim/locomotion/train_payload.py`, `policies/go2/go2_z1_payload/`) |
 | Mission: plan → walk → scan → dock → force task → walk home | done (`sim/mission_demo.py`) |
 | RL locomotion from scratch, ANYmal-C (ETH legged_gym, `anymal_c_rough`, Isaac Gym) | training scripts ready (`locomotion/`), to run on a Linux GPU server |
+| ArUco mission: 4 markers on curved surfaces, found with a head RGB camera, visited one after the other (observe → navigate → confirm with the WBC → re-observe / explore) | done (`sim/aruco_mission.py`, `sim/aruco_selftest.py`) |
 
 ## Setup
 ```bash
@@ -220,6 +221,77 @@ With `--station panel` (Go2, panel seed 4): walk 9.4 m and dock within 36 mm (22
 
 Earlier ANYmal-C run (pipe as in the map, no perception): `results/mission/*_anymal_c_z1_v1.*`.
 
+## Control architecture (verified in the code)
+| component | method | where | when it is active |
+|---|---|---|---|
+| Locomotion | RL: Isaac Lab RSL-RL MLP velocity policies (pretrained) + the Go2 policy fine-tuned with the arm (PPO) | `sim/locomotion/policy.py`, `train_payload.py` | walking and turning; the policy alone keeps the robot balanced while it walks; the arm is held stowed by joint PD + gravity compensation |
+| Whole-body stability | stance WBC: floating-base inverse-dynamics QP (base pose, feet fixed, friction cones, torque limits) | `sim/wbc/stance_wbc.py` | only while standing (all four feet down): work stations, ArUco targets |
+| Arm force interaction | admittance along the contact normal, `v_n = −k_f (F_des − F_meas)`, plus desired-force feed-forward and a force integral, *inside the WBC QP* (hybrid force/motion: tangent plane and tool axis are position-controlled) | `StanceWBC.compute`, `force` branch | only in contact tasks (pipe, freeform panel) |
+
+Hand-offs are sequential: RL walks to a pose → `pol` stops, timestep 5 → 2 ms, the WBC computes all leg + arm torques → back to RL (`pol.reset()`). There is no separate arm-level admittance controller (a full Cartesian mass-spring-damper on the arm), and no WBC during walking.
+
+## ArUco mission (`sim/aruco_mission.py`)
+The robot finds four ArUco markers it does not know about and visits them one after the other.
+```bash
+pip install opencv-python-headless          # (in requirements.txt) ArUco detection
+python sim/aruco_selftest.py                # fast checks of the environment + components (~1 min)
+python sim/aruco_mission.py                 # Go2 + Z1, fine-tuned policy -> results/aruco/ (~2 min without video)
+python sim/aruco_mission.py --no-video --seed 1
+```
+**World** (`world.aruco_workshop()`): the workshop above, unchanged (walls, obstacles, stations, map), plus:
+- **Four curved surfaces, one marker each** (`DICT_4X4_50`, 12 cm black square + white quiet zone). The markers are printed sheets that bend with the surface: on cylinders they are unrolled exactly, on ellipsoids projected along the normal (`sim/markers.py`). They are not in the map.
+
+| marker | surface | faces |
+|---|---|---|
+| 12 | existing steel column (vertical cylinder, r 0.25 m) | west, towards the start (seen from 4 m) |
+| 5 | new upright vessel (ellipsoid 0.38 × 0.38 × 0.5 m) | south-east |
+| 37 | new spherical tank (r 0.4 m) at the north wall | south (hidden behind the rack from the start) |
+| 23 | existing pipe (horizontal cylinder, r 0.15 m), 60° down its south flank | south: only visible from the corridor along the south wall |
+
+- **A staircase** (2 × 10 cm steps, 0.6 m landing) on the direct route from the vessel to the column. It is terrain (geom group 0, which the locomotion height scan sees) and in the planner's map. The planner treats it as **not traversable** (climbing stairs with the arm on board is not validated, see below), so routes go around it.
+
+**Head RGB camera** (`sim/perception/aruco.py`): D435 colour-stream class, 1280 × 720, 69° × 42.5°, on the Go2's head pitched 8° down, rendered by MuJoCo without the robot's own geoms, with seeded pixel noise. ArUco detection (sub-pixel corners) → IPPE-square PnP with the known marker size → marker pose in the world (the robot's pose comes from the simulator, as everywhere here: no SLAM).
+- A near-frontal view of a planar marker has two PnP solutions with similar error. The ratio is kept as an *ambiguity*, and such views count little for the marker normal.
+- Corners on a curved surface are not coplanar with the centre. On the pipe (12 cm marker over 46° of arc) a single view is ~30 mm off at 1.6 m; on the others 5–8 mm.
+
+**Pipeline** (interfaces in brackets):
+1. **Observe** - turn 360° in place with the RL policy, a camera frame every 0.25 s → detections (`ArucoDetector.detect`) → `MarkerRegistry.update` (per-id fused estimate, weighted by distance, view angle and ambiguity, outlier gate) and `Explorer.mark_seen` (which obstacle surfaces have been checked). A new id stays a *candidate* until it has 3 views and its estimate lies on a surface of the map (within 15 cm of an obstacle). This drops the rare false positive of the small 4×4 dictionary; one run reported a non-existent id 17 for a single frame.
+2. **Select** - the nearest detected, unvisited marker (`MarkerRegistry.next_target`).
+3. **Navigate** - `plan_to_marker`: approach pose 0.75 m in front of the marker along its normal, facing it (falls back to other standoffs / angles / docking-leg lengths), A* on the existing occupancy map (`grid_planner.plan_path`, obstacles + stairs), `PathFollower` → RL policy. Frames keep refining the estimate; if the approach pose moves by > 10 cm / 6°, it replans.
+4. **Confirm** - hand-off to the stance WBC (`stance_hold.StanceHold`: level, brace 2 cm, hold, rise). While held still the camera re-measures the marker. Confirmed when it is seen and the robot stands within 6 cm laterally, 10 cm in distance and 10° in heading of the approach pose, with the base below 10 mm/s. Otherwise it re-docks (up to 3 attempts), then marks the marker unreachable. Hand back to RL.
+5. **Visited** → recorded (`mark_visited`; a marker is never selected again) → **Observe** again at the target.
+6. **Verify** a half-seen marker: if no confirmed target is left but a candidate on a map surface is, walk to ~1.1 m in front of it and look while standing still. A real marker is confirmed and becomes a target; anything not seen again is rejected as a false positive.
+7. **Explore** when no unvisited marker or candidate is known (`sim/planning/explorer.py`): surface cells of the map (weight 1 on curved objects, 0.15 on boxes/walls, 0 on stairs) are "seen" once a frame had them in view, within 3.5 m, in line of sight on the map and facing the camera. The next viewpoint is the reachable lattice point maximising unseen weight visible in a full turn × exp(−distance / 6 m). Walking there aborts as soon as a new marker appears.
+8. **Done** when all four are visited (`TASK COMPLETE`); it stops early if no viewpoint is left or at the time limit (`TASK INCOMPLETE`, exit code 1).
+
+**Result** (Go2 + Z1, `go2_payload`, seed 0; `results/aruco/`):
+
+| step | what happened |
+|---|---|
+| start: 360° scan | detects 12 (column, 4.05 m away, first estimate 65 mm off) and 5 (vessel, 2.5 m, 9 mm) |
+| → 5 (vessel) | 2.1 m path, confirmed: lateral 9 mm, heading 0.4° from the true normal |
+| re-observe at 5, → 12 (column) | remembered from the start scan; path goes around the stairs; replanned once as the estimate refined; confirmed (2 mm, 3.3°) |
+| re-observe at 12: nothing new → explore | on the way to the first viewpoint it sees 37 (sphere tank, 2.8 m), aborts and goes there; confirmed (4 mm, 0.2°) |
+| re-observe at 37: nothing new → explore | 3 viewpoints; 23 (pipe) appears at the third, in the south corridor (0.6 m); confirmed (5 mm, 5.3°: the pipe's normal estimate is 3.1° off) |
+| end | **TASK COMPLETE** after 183 s simulated: 4/4 visited, each confirmed at the first attempt, no revisits, no contact with obstacles or stairs, min clearance 0.42 m (docking legs), max tilt 8.4° |
+
+Fused marker estimates vs the truth: 5–14 mm and 0.02–3.1°. The base was held to 1 mm/s and 0.4 mm drift during each confirmation.
+
+**Repeatability**, camera-noise seeds 0–4 (`summary_go2_z1[_seedN].json`): 5/5 complete, same order, 181–184 s, all ten checks pass, every target confirmed first time.
+- **Marker estimates:** vessel 5 mm, column 8–9 mm, sphere 6 mm, pipe 13–16 mm.
+- **Final alignment vs the truth:** lateral ≤ 18 mm (27 mm once, on the pipe); heading ≤ 5.3°.
+- **Candidate path:** in seed 3 the pipe marker had only 2 views after the scan and was confirmed by the verify step.
+- **False positives:** in seed 0 a non-existent id 17 appeared in one frame; it stayed a candidate (not on any map surface) and was ignored.
+- **Before the verify step**, seed 2 ended `TASK INCOMPLETE` (marker 23 seen in only 2 frames). The same seed now completes.
+
+A run is deterministic for a given `--seed`.
+
+**Limits / open points:**
+- **Stairs:** the repo had no staircase, so this one was added. It is avoided, not climbed: the fine-tuned Go2 policy was trained on flat ground only, and the pretrained rough policies were never tested on stairs in MuJoCo with the arm (the archived Spot policies all failed stairs).
+- **Exploration** is greedy: here it checked a north-west viewpoint before the south corridor where the last marker was.
+- **Localisation and pose** come from the simulator (as in the other missions). The markers are only detected, never touched: the admittance task is not used.
+- **Marker size:** one size for all markers. The robot needs per-id sizes (`ArucoDetector(sizes=...)`) if they differ.
+
 ## Layout
 | path | what |
 |---|---|
@@ -234,6 +306,12 @@ Earlier ANYmal-C run (pipe as in the map, no perception): `results/mission/*_any
 | `sim/surface_task.py`, `sim/surface_demo.py` | scan → reconstruct → force-controlled tracing of a random freeform surface |
 | `sim/force_task.py`, `sim/force_demo.py` | force-controlled pass on the pipe (task timeline, sensor, metrics, plots, video) |
 | `sim/mission_demo.py` | full mission: plan → walk → dock → force control → walk home |
+| `sim/aruco_mission.py`, `sim/aruco_selftest.py` | ArUco mission (observe → select → navigate → confirm → re-observe / explore) and its fast checks |
+| `sim/markers.py` | ArUco marker images + textured meshes bent onto cylinders / ellipsoids |
+| `sim/perception/aruco.py` | head RGB camera (MuJoCo-rendered) + ArUco detection and world-frame pose estimation |
+| `sim/planning/targets.py`, `sim/planning/explorer.py` | marker registry + approach-pose planning; surface-coverage exploration (next viewpoint) |
+| `sim/stance_hold.py` | stance-WBC references for standing still at a target (brace, hold, rise) |
+| `results/aruco/` | ArUco mission summary (events, checks), map, video |
 | `results/force_control/`, `results/surface/`, `results/mission/`, `results/locomotion/` | pipe force control, freeform surface, mission and walking-policy results |
 | `locomotion/` | ETH legged_gym (ANYmal-C only) + server setup / train / export scripts; see `locomotion/README.md` |
 | `tools/export_rslrl_checkpoint.py` | RSL-RL `checkpoint.pt` → TorchScript actor `policy.pt` |

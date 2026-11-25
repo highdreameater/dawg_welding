@@ -1,0 +1,705 @@
+{
+  "banner": "TASK COMPLETE: all 4 ArUco markers visited [5, 12, 37, 23]",
+  "complete": true,
+  "robot": "go2_z1",
+  "loco": "go2_payload",
+  "world": "aruco_workshop",
+  "seed": 0,
+  "sim_time_s": 182.8,
+  "wall_time_s": 201.1,
+  "order_detected": [
+    12,
+    5,
+    37,
+    23
+  ],
+  "order_visited": [
+    5,
+    12,
+    37,
+    23
+  ],
+  "unreachable": [],
+  "unconfirmed_candidates": {
+    "17": 1
+  },
+  "verifications": 0,
+  "rejected_false_positives": [],
+  "markers": {
+    "12": {
+      "surface": "column",
+      "surface_type": "vertical cylinder",
+      "p": [
+        4.05,
+        -1.3,
+        0.32
+      ],
+      "n": [
+        -1.0,
+        0.0,
+        0.0
+      ]
+    },
+    "5": {
+      "surface": "vessel",
+      "surface_type": "ellipsoid",
+      "p": [
+        -0.508,
+        2.708,
+        0.32
+      ],
+      "n": [
+        0.248,
+        -0.927,
+        -0.281
+      ]
+    },
+    "37": {
+      "surface": "sphere_tank",
+      "surface_type": "sphere",
+      "p": [
+        6.0,
+        3.008,
+        0.32
+      ],
+      "n": [
+        0.0,
+        -0.98,
+        -0.2
+      ]
+    },
+    "23": {
+      "surface": "pipe",
+      "surface_type": "horizontal pipe (cylinder)",
+      "p": [
+        7.75,
+        -2.43,
+        0.245
+      ],
+      "n": [
+        0.0,
+        -0.866,
+        0.5
+      ]
+    }
+  },
+  "visits": [
+    {
+      "id": 5,
+      "surface": "vessel",
+      "first_detection": {
+        "t": 1.9999999999999793,
+        "robot_xy": [
+          -0.06,
+          0.008
+        ],
+        "dist_m": 2.47,
+        "state": "observe",
+        "pos_err_mm": 8.6
+      },
+      "navigation": [
+        {
+          "walk": {
+            "status": "docked",
+            "time_s": 8.26,
+            "pos_err_mm": 37.5,
+            "yaw_err_deg": 0.44
+          },
+          "plans": [
+            {
+              "plan_ms": 23.2,
+              "length_m": 2.07,
+              "min_clearance_m": 0.6,
+              "standoff_m": 0.75,
+              "yaw_offset_deg": 0
+            }
+          ]
+        }
+      ],
+      "confirm": [
+        {
+          "seen": 6,
+          "wbc_qp_failures": 0,
+          "base_speed_rms_mm_s": 1.03,
+          "base_drift_mm": 0.4,
+          "confirmed": true,
+          "standoff_m": 0.75,
+          "alignment_belief": {
+            "distance_m": 0.78,
+            "lateral_m": -0.009,
+            "heading_err_deg": 0.35
+          },
+          "alignment_truth": {
+            "distance_m": 0.775,
+            "lateral_m": -0.009,
+            "heading_err_deg": 0.38
+          }
+        }
+      ],
+      "views": 44,
+      "estimate_err_mm": 5.3,
+      "normal_err_deg": 0.37
+    },
+    {
+      "id": 12,
+      "surface": "column",
+      "first_detection": {
+        "t": 0.2500000000000001,
+        "robot_xy": [
+          -0.001,
+          -0.008
+        ],
+        "dist_m": 4.05,
+        "state": "observe",
+        "pos_err_mm": 64.6
+      },
+      "navigation": [
+        {
+          "walk": {
+            "status": "docked",
+            "time_s": 7.35,
+            "pos_err_mm": 32.3,
+            "yaw_err_deg": 1.36
+          },
+          "plans": [
+            {
+              "plan_ms": 167.0,
+              "length_m": 7.37,
+              "min_clearance_m": 0.658,
+              "standoff_m": 0.75,
+              "yaw_offset_deg": 0
+            },
+            {
+              "plan_ms": 18.0,
+              "length_m": 1.89,
+              "min_clearance_m": 0.658,
+              "standoff_m": 0.75,
+              "yaw_offset_deg": 0
+            }
+          ]
+        }
+      ],
+      "confirm": [
+        {
+          "seen": 6,
+          "wbc_qp_failures": 0,
+          "base_speed_rms_mm_s": 1.0,
+          "base_drift_mm": 0.37,
+          "confirmed": true,
+          "standoff_m": 0.75,
+          "alignment_belief": {
+            "distance_m": 0.749,
+            "lateral_m": 0.003,
+            "heading_err_deg": -3.8
+          },
+          "alignment_truth": {
+            "distance_m": 0.741,
+            "lateral_m": 0.002,
+            "heading_err_deg": -3.3
+          }
+        }
+      ],
+      "views": 59,
+      "estimate_err_mm": 8.3,
+      "normal_err_deg": 1.23
+    },
+    {
+      "id": 37,
+      "surface": "sphere_tank",
+      "first_detection": {
+        "t": 69.37700000001054,
+        "robot_xy": [
+          4.58,
+          0.336
+        ],
+        "dist_m": 2.77,
+        "state": "explore",
+        "pos_err_mm": 18.9
+      },
+      "navigation": [
+        {
+          "walk": {
+            "status": "docked",
+            "time_s": 6.98,
+            "pos_err_mm": 32.4,
+            "yaw_err_deg": 0.19
+          },
+          "plans": [
+            {
+              "plan_ms": 55.6,
+              "length_m": 2.66,
+              "min_clearance_m": 0.652,
+              "standoff_m": 0.75,
+              "yaw_offset_deg": 0
+            }
+          ]
+        }
+      ],
+      "confirm": [
+        {
+          "seen": 6,
+          "wbc_qp_failures": 0,
+          "base_speed_rms_mm_s": 1.05,
+          "base_drift_mm": 0.41,
+          "confirmed": true,
+          "standoff_m": 0.75,
+          "alignment_belief": {
+            "distance_m": 0.768,
+            "lateral_m": 0.004,
+            "heading_err_deg": 0.16
+          },
+          "alignment_truth": {
+            "distance_m": 0.762,
+            "lateral_m": 0.004,
+            "heading_err_deg": 0.16
+          }
+        }
+      ],
+      "views": 27,
+      "estimate_err_mm": 6.5,
+      "normal_err_deg": 0.02
+    },
+    {
+      "id": 23,
+      "surface": "pipe",
+      "first_detection": {
+        "t": 164.11899999991982,
+        "robot_xy": [
+          7.243,
+          -3.144
+        ],
+        "dist_m": 0.62,
+        "state": "observe",
+        "pos_err_mm": 20.0
+      },
+      "navigation": [
+        {
+          "walk": {
+            "status": "docked",
+            "time_s": 7.1,
+            "pos_err_mm": 44.1,
+            "yaw_err_deg": 3.54
+          },
+          "plans": [
+            {
+              "plan_ms": 10.0,
+              "length_m": 0.74,
+              "min_clearance_m": 0.55,
+              "standoff_m": 0.75,
+              "yaw_offset_deg": 0
+            }
+          ]
+        }
+      ],
+      "confirm": [
+        {
+          "seen": 6,
+          "wbc_qp_failures": 0,
+          "base_speed_rms_mm_s": 1.11,
+          "base_drift_mm": 0.44,
+          "confirmed": true,
+          "standoff_m": 0.75,
+          "alignment_belief": {
+            "distance_m": 0.746,
+            "lateral_m": 0.005,
+            "heading_err_deg": -3.96
+          },
+          "alignment_truth": {
+            "distance_m": 0.734,
+            "lateral_m": 0.005,
+            "heading_err_deg": -5.3
+          }
+        }
+      ],
+      "views": 9,
+      "estimate_err_mm": 13.5,
+      "normal_err_deg": 3.12
+    }
+  ],
+  "revisits": 0,
+  "explorations": 4,
+  "viewpoints": [
+    [
+      5.88,
+      1.28
+    ],
+    [
+      6.48,
+      0.67
+    ],
+    [
+      2.88,
+      3.38
+    ],
+    [
+      7.38,
+      -3.22
+    ]
+  ],
+  "surface_coverage": 0.701,
+  "walking": {
+    "min_clearance_m": 0.424,
+    "world_contacts": [],
+    "stairs_contact": false,
+    "tilt_max_deg": 8.4,
+    "speed_tracking_rms": 0.057
+  },
+  "checks": {
+    "1_four_markers_spawned": true,
+    "2_one_marker_per_curved_surface": true,
+    "3_detected_and_pose_estimated": true,
+    "4_navigated_on_map": true,
+    "5_no_obstacle_or_stairs_contact": true,
+    "6_stabilised_and_aligned": true,
+    "7_reobserved_at_targets": true,
+    "8_explored_when_nothing_visible": true,
+    "9_no_revisits": true,
+    "10_terminated_after_all_four": true
+  },
+  "events": [
+    {
+      "t": 0.0,
+      "event": "start",
+      "robot": "go2_z1",
+      "loco": "go2_payload",
+      "markers_expected": 4
+    },
+    {
+      "t": 0.25,
+      "event": "detected",
+      "id": 12,
+      "dist_m": 4.05,
+      "during": "observe",
+      "est_err_mm": 64.6
+    },
+    {
+      "t": 2.0,
+      "event": "detected",
+      "id": 5,
+      "dist_m": 2.47,
+      "during": "observe",
+      "est_err_mm": 8.6
+    },
+    {
+      "t": 9.79,
+      "event": "observed",
+      "where": "start",
+      "turned_deg": 360,
+      "time_s": 9.2,
+      "new_markers": [
+        12,
+        5
+      ],
+      "coverage": 0.056
+    },
+    {
+      "t": 9.79,
+      "event": "target",
+      "id": 5,
+      "estimate": [
+        -0.512,
+        2.719,
+        0.323
+      ],
+      "views": 12
+    },
+    {
+      "t": 9.79,
+      "event": "plan",
+      "target": 5,
+      "attempt": 0,
+      "length_m": 2.07,
+      "pose": [
+        -0.32,
+        1.99,
+        1.83
+      ]
+    },
+    {
+      "t": 21.252,
+      "event": "confirm",
+      "id": 5,
+      "attempt": 0,
+      "confirmed": true,
+      "alignment": {
+        "distance_m": 0.78,
+        "lateral_m": -0.009,
+        "heading_err_deg": 0.35
+      }
+    },
+    {
+      "t": 21.252,
+      "event": "visited",
+      "id": 5,
+      "n_visited": 1
+    },
+    {
+      "t": 31.262,
+      "event": "observed",
+      "where": "marker 5",
+      "turned_deg": 360,
+      "time_s": 9.4,
+      "new_markers": [],
+      "coverage": 0.056
+    },
+    {
+      "t": 31.262,
+      "event": "target",
+      "id": 12,
+      "estimate": [
+        4.11,
+        -1.315,
+        0.321
+      ],
+      "views": 15
+    },
+    {
+      "t": 31.262,
+      "event": "plan",
+      "target": 12,
+      "attempt": 0,
+      "length_m": 7.37,
+      "pose": [
+        3.37,
+        -1.17,
+        -0.19
+      ]
+    },
+    {
+      "t": 44.012,
+      "event": "replan",
+      "target": 12,
+      "reason": "marker estimate refined"
+    },
+    {
+      "t": 44.012,
+      "event": "plan",
+      "target": 12,
+      "attempt": 1,
+      "length_m": 1.89,
+      "pose": [
+        3.34,
+        -1.24,
+        -0.08
+      ]
+    },
+    {
+      "t": 54.562,
+      "event": "confirm",
+      "id": 12,
+      "attempt": 0,
+      "confirmed": true,
+      "alignment": {
+        "distance_m": 0.749,
+        "lateral_m": 0.003,
+        "heading_err_deg": -3.8
+      }
+    },
+    {
+      "t": 54.562,
+      "event": "visited",
+      "id": 12,
+      "n_visited": 2
+    },
+    {
+      "t": 64.627,
+      "event": "observed",
+      "where": "marker 12",
+      "turned_deg": 360,
+      "time_s": 9.5,
+      "new_markers": [],
+      "coverage": 0.098
+    },
+    {
+      "t": 64.627,
+      "event": "explore",
+      "viewpoint": [
+        5.88,
+        1.28
+      ],
+      "gain": 64.2,
+      "dist_m": 2.65,
+      "select_ms": 580
+    },
+    {
+      "t": 69.377,
+      "event": "detected",
+      "id": 37,
+      "dist_m": 2.77,
+      "during": "explore",
+      "est_err_mm": 18.9
+    },
+    {
+      "t": 69.377,
+      "event": "explore",
+      "result": "new marker detected on the way"
+    },
+    {
+      "t": 69.377,
+      "event": "target",
+      "id": 37,
+      "estimate": [
+        6.005,
+        3.029,
+        0.323
+      ],
+      "views": 3
+    },
+    {
+      "t": 69.377,
+      "event": "plan",
+      "target": 37,
+      "attempt": 0,
+      "length_m": 2.66,
+      "pose": [
+        6.01,
+        2.28,
+        1.57
+      ]
+    },
+    {
+      "t": 79.564,
+      "event": "confirm",
+      "id": 37,
+      "attempt": 0,
+      "confirmed": true,
+      "alignment": {
+        "distance_m": 0.768,
+        "lateral_m": 0.004,
+        "heading_err_deg": 0.16
+      }
+    },
+    {
+      "t": 79.564,
+      "event": "visited",
+      "id": 37,
+      "n_visited": 3
+    },
+    {
+      "t": 89.499,
+      "event": "observed",
+      "where": "marker 37",
+      "turned_deg": 360,
+      "time_s": 9.3,
+      "new_markers": [],
+      "coverage": 0.244
+    },
+    {
+      "t": 89.499,
+      "event": "explore",
+      "viewpoint": [
+        6.48,
+        0.67
+      ],
+      "gain": 36.3,
+      "dist_m": 1.6,
+      "select_ms": 402
+    },
+    {
+      "t": 107.999,
+      "event": "observed",
+      "where": "at viewpoint",
+      "turned_deg": 360,
+      "time_s": 9.4,
+      "new_markers": [],
+      "coverage": 0.44
+    },
+    {
+      "t": 107.999,
+      "event": "explore",
+      "viewpoint": [
+        2.88,
+        3.38
+      ],
+      "gain": 30.3,
+      "dist_m": 4.5,
+      "select_ms": 400
+    },
+    {
+      "t": 131.814,
+      "event": "observed",
+      "where": "at viewpoint",
+      "turned_deg": 360,
+      "time_s": 9.8,
+      "new_markers": [],
+      "coverage": 0.53
+    },
+    {
+      "t": 131.814,
+      "event": "explore",
+      "viewpoint": [
+        7.38,
+        -3.22
+      ],
+      "gain": 45.9,
+      "dist_m": 10.6,
+      "select_ms": 322
+    },
+    {
+      "t": 164.119,
+      "event": "detected",
+      "id": 23,
+      "dist_m": 0.62,
+      "during": "observe",
+      "est_err_mm": 20.0
+    },
+    {
+      "t": 172.489,
+      "event": "observed",
+      "where": "at viewpoint",
+      "turned_deg": 360,
+      "time_s": 9.4,
+      "new_markers": [
+        23
+      ],
+      "coverage": 0.692
+    },
+    {
+      "t": 172.489,
+      "event": "target",
+      "id": 23,
+      "estimate": [
+        7.754,
+        -2.412,
+        0.237
+      ],
+      "views": 3
+    },
+    {
+      "t": 172.489,
+      "event": "plan",
+      "target": 23,
+      "attempt": 0,
+      "length_m": 0.74,
+      "pose": [
+        7.73,
+        -3.16,
+        1.54
+      ]
+    },
+    {
+      "t": 182.794,
+      "event": "confirm",
+      "id": 23,
+      "attempt": 0,
+      "confirmed": true,
+      "alignment": {
+        "distance_m": 0.746,
+        "lateral_m": 0.005,
+        "heading_err_deg": -3.96
+      }
+    },
+    {
+      "t": 182.794,
+      "event": "visited",
+      "id": 23,
+      "n_visited": 4
+    },
+    {
+      "t": 182.794,
+      "event": "done",
+      "complete": true,
+      "sim_time_s": 182.8
+    }
+  ]
+}
