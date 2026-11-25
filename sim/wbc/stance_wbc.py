@@ -108,6 +108,8 @@ def ik_arm(m, qpos_init, ix: Indexer, p_des, R_des, seed=None, iters=300, axis_o
             jr = (np.eye(3) - np.outer(Rc[:, 0], Rc[:, 0])) @ jr
         Jm = np.vstack([jp[:, cols], 0.5 * jr[:, cols]])
         dq = Jm.T @ np.linalg.solve(Jm @ Jm.T + 1e-4 * np.eye(6), e)
+        if axis_only and np.abs(dq).max() > 0.2:
+            dq *= 0.2 / np.abs(dq).max()
         d.qpos[ix.arm_q[:6]] = np.clip(d.qpos[ix.arm_q[:6]] + dq, ix.arm_lo[:6], ix.arm_hi[:6])
     mujoco.mj_fwdPosition(m, d)
     res = np.linalg.norm(p_des - d.site_xpos[ix.tip])
@@ -119,7 +121,8 @@ class StanceWBC:
     def __init__(self, ctrl_model, cfg: RobotCfg, mu=0.6, f_min=5.0, f_max=800.0, solver="daqp",
                  w_base=100.0, w_post=1.0, kp_base=900.0, kd_base=60.0,
                  kp_ee=900.0, kd_ee=60.0, ki_ee=0.0, kp_post=400.0, kd_post=40.0, kc=40.0,
-                 kf=0.002, kv_n=60.0, vn_max=0.02, v_approach=0.015, f_contact=0.3, ff_ramp=0.2, ki_f=20.0):
+                 kf=0.002, kv_n=60.0, vn_max=0.02, v_approach=0.015, f_contact=0.3, ff_ramp=0.2, ki_f=20.0,
+                 dob_T=None, dob_cartesian_only=False):
         self.m = ctrl_model
         self.d = mujoco.MjData(ctrl_model)
         self.ix = Indexer(ctrl_model, cfg)
@@ -138,6 +141,10 @@ class StanceWBC:
         self.ki_ee = ki_ee
         self.ee_int = np.zeros(6)
         self.ee_int_max = 0.002                             # [m*s] / [rad*s] anti-windup clamp
+        self.dob_cartesian_only = dob_cartesian_only
+        self.dob_T = dob_T                                  # arm disturbance-observer filter time constant [s] (None: off)
+        self.dist_hat = np.zeros(len(self.ix.arm_v))
+        self.prev_qvel, self.prev_tau_arm = None, None
         # force control along the surface normal:
         #   free space (F_meas < f_contact): approach along -n at v_approach
         #   in contact: admittance vn_des = -kf (F_des - F_meas), |vn_des| <= vn_max, plus a feed-forward of the
@@ -244,6 +251,16 @@ class StanceWBC:
         else:
             self.ee_int[:] = 0.0
 
+        # --- expected contact force at the tool tip in joint-posture mode (ref["f_ext"]: world force the surface exerts
+        # on the tip, e.g. F_des * n). It enters the dynamics like the force-mode feed-forward above, so the joints
+        # supply the push by torque instead of yielding (deflection under an unmodelled 5 N slid the tip ~6 cm and
+        # tilted the tool ~5 deg). Must be the *desired* force - the measured one would be positive feedback.
+        f_ext = ref.get("f_ext")
+        if f_ext is not None and w_ee == 0:
+            jpt = np.zeros((3, nv))
+            mujoco.mj_jacSite(m, d, jpt, None, ix.tip)
+            h = h - jpt.T @ np.asarray(f_ext, float)
+
         # --- arm posture / joint trajectory
         na_ = ix.n_arm
         a_post = ref["arm_qdd"] + self.kp_post * (ref["arm_q"] - qpos[ix.arm_q]) + self.kd_post * (ref["arm_qd"] - qvel[ix.arm_v])
@@ -299,7 +316,22 @@ class StanceWBC:
             v_cmd[ix.arm_v] = np.linalg.pinv(Ja, rcond=1e-3) @ np.concatenate([v_tip, w_tool])
         else:
             v_cmd[ix.arm_v] = ref["arm_qd"]
-        tau[6:] += self.friction[6:] * np.tanh(v_cmd[6:] / self.v_eps)
+        ff = self.friction[6:] * np.tanh(v_cmd[6:] / self.v_eps)
+        if self.dob_T is not None:
+            # arm disturbance observer: tau_dist = M qdd_meas + h - tau_applied (arm rows have no contact terms),
+            # low-pass filtered. Always updated (estimate stays warm); applied *instead of* the fixed friction
+            # feed-forward only while the tool is tracked in Cartesian space (welding precision mode).
+            ia = ix.arm_v
+            if self.prev_qvel is not None:
+                qdd_meas = (qvel - self.prev_qvel) / m.opt.timestep
+                resid = M[ia] @ qdd_meas + h[ia] - self.prev_tau_arm
+                a = m.opt.timestep / (self.dob_T + m.opt.timestep)
+                self.dist_hat += a * (resid - self.dist_hat)
+            if w_ee > 0 or not self.dob_cartesian_only:
+                tau[ia] -= self.dist_hat
+                ff[ia - 6] = 0.0
+        tau[6:] += ff
         tau[6:] = np.clip(tau[6:], -ix.tau_max_dof[6:], ix.tau_max_dof[6:])
+        self.prev_qvel, self.prev_tau_arm = qvel.copy(), tau[ix.arm_v].copy()
         self.last_tau, self.last_f = tau, f
         return tau, f

@@ -1,0 +1,22 @@
+[
+  {
+    "reached_end_s": 66.0,
+    "policy": "moe_cts",
+    "completed": true,
+    "distance_m": 23.62,
+    "lin_vel_err": 0.131,
+    "max_roll_deg": 3.5,
+    "max_pitch_deg": 12.2,
+    "terrain_relief_m": 0.08
+  },
+  {
+    "reached_end_s": 58.5,
+    "policy": "symmetry",
+    "completed": true,
+    "distance_m": 23.63,
+    "lin_vel_err": 0.084,
+    "max_roll_deg": 6.0,
+    "max_pitch_deg": 7.4,
+    "terrain_relief_m": 0.08
+  }
+]

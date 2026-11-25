@@ -1,14 +1,14 @@
 """Stance WBC demo: the quadruped stands still, the arm welds a seam, the base must stay rigid.
 
-Robot (sim/wbc/robots.py):  anymal_c_z1 (ANYmal-C + Unitree Z1)
+Robot (sim/wbc/robots.py):  go2_z1 (Unitree Go2 + Z1; no torch by default - massless tool point past the flange)
 Scenarios:
     weld   : brace (lower base 4 cm) -> unstow -> descend -> weld 30 cm seam with 4 mm weave -> retract
     stress : brace -> unstow -> large fast arm sweeps (worst-case CoM excursions)
 
-    python sim/stance_demo.py --robot anymal_c_z1                     # both scenarios -> results/stance_wbc/<robot>/
-    python sim/stance_demo.py --robot anymal_c_z1 --scenario weld
-    python sim/stance_demo.py --robot anymal_c_z1 --ctrl-torch-mass 0.6   # controller's torch-mass belief is wrong
-    mjpython sim/stance_demo.py --robot anymal_c_z1 --scenario weld --viewer
+    python sim/stance_demo.py                                         # both scenarios -> results/stance_wbc/go2_z1/
+    python sim/stance_demo.py --scenario weld
+    python sim/stance_demo.py --torch-mass 1.2 --ctrl-torch-mass 0.6     # with a torch; controller believes the wrong mass
+    mjpython sim/stance_demo.py --scenario weld --viewer
 """
 import argparse
 import json
@@ -50,8 +50,8 @@ class Plan:
         self.base_brace = self.base_pos0 - np.array([0, 0, cfg.brace_dz])
         self.z_top = 2 * cfg.workpiece_half[2]
         z_weld = self.z_top + self.STANDOFF
-        self.p_start = np.array([cfg.workpiece_x, -0.15, z_weld])
-        self.p_end = np.array([cfg.workpiece_x, 0.15, z_weld])
+        self.p_start = np.array([cfg.workpiece_x, -cfg.seam_half, z_weld])
+        self.p_end = np.array([cfg.workpiece_x, cfg.seam_half, z_weld])
         self.hover_start = self.p_start + [0, 0, 0.08]
         self.hover_end = self.p_end + [0, 0, 0.08]
         self.ee_quat = mat2quat(R_TORCH_DOWN)
@@ -285,9 +285,9 @@ def plot(L, plan, robot, scn, path):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--robot", choices=list(ROBOTS), default="anymal_c_z1")
+    ap.add_argument("--robot", choices=list(ROBOTS), default="go2_z1_official")
     ap.add_argument("--scenario", choices=["weld", "stress", "all"], default="all")
-    ap.add_argument("--torch-mass", type=float, default=1.2, help="true torch mass in the plant [kg]")
+    ap.add_argument("--torch-mass", type=float, default=0.0, help="true torch mass in the plant [kg] (0: no torch)")
     ap.add_argument("--ctrl-torch-mass", type=float, default=None, help="torch mass the controller believes [kg]")
     ap.add_argument("--no-video", action="store_true")
     ap.add_argument("--viewer", action="store_true")

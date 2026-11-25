@@ -1,0 +1,476 @@
+{
+  "tasks": {
+    "3.0": {
+      "u_range": [
+        0.0,
+        0.75
+      ],
+      "force_mean": 2.606806169687048,
+      "force_rms_err": 4.41853251931289,
+      "force_p5_p95": [
+        0.0,
+        10.268816732537875
+      ],
+      "contact_lost": 0.5372107135961162,
+      "base_drift_mm": 0.3873732758339156,
+      "wbc_qp_failures": 0,
+      "ik_margin": 0.10824731973617878,
+      "approach_wait_s": 0.0,
+      "true_dock_err_mm_deg": [
+        96.82422737807539,
+        12.582464557335522
+      ]
+    },
+    "11.0": {
+      "u_range": [
+        0.0,
+        0.14
+      ],
+      "force_mean": 0.0,
+      "force_rms_err": 5.0,
+      "force_p5_p95": [
+        0.0,
+        0.0
+      ],
+      "contact_lost": 1.0,
+      "base_drift_mm": 0.07351343547037324,
+      "wbc_qp_failures": 0,
+      "ik_margin": 0.11868372660716399,
+      "approach_wait_s": 6.0,
+      "true_dock_err_mm_deg": [
+        140.26186205328366,
+        3.2438696350169605
+      ]
+    }
+  },
+  "surveys": {
+    "3": {
+      "model": {
+        "kind": "thin-plate spline",
+        "points": 11658,
+        "cells": 2201,
+        "coverage": 0.9987552383718518,
+        "area_coverage": 1.0,
+        "depth_range_mm": [
+          -18.71941918574826,
+          -14.01038789855687
+        ]
+      },
+      "accuracy": {
+        "depth_rms_mm": 0.3964417055903267,
+        "depth_max_mm": 1.25865438853804,
+        "normal_rms_deg": 1.6868877991634845,
+        "normal_max_deg": 4.175417331616457
+      },
+      "standoff": 0.61,
+      "reach_table": [
+        [
+          0.55,
+          0.0
+        ],
+        [
+          0.58,
+          0.75
+        ],
+        [
+          0.61,
+          0.75
+        ],
+        [
+          0.64,
+          0.75
+        ],
+        [
+          0.67,
+          0.69
+        ],
+        [
+          0.7,
+          0.6
+        ],
+        [
+          0.73,
+          0.51
+        ],
+        [
+          0.76,
+          0.39
+        ],
+        [
+          0.79,
+          0.12
+        ],
+        [
+          0.82,
+          0.0
+        ],
+        [
+          0.85,
+          0.0
+        ],
+        [
+          0.88,
+          0.0
+        ],
+        [
+          0.91,
+          0.0
+        ],
+        [
+          0.94,
+          0.0
+        ]
+      ],
+      "patches": [
+        [
+          0.0,
+          0.75
+        ]
+      ]
+    },
+    "11": {
+      "model": {
+        "kind": "thin-plate spline",
+        "points": 2549,
+        "cells": 449,
+        "coverage": 0.9986824769433466,
+        "area_coverage": 1.0,
+        "depth_range_mm": [
+          -91.09356834279055,
+          -61.27519573718734
+        ]
+      },
+      "accuracy": {
+        "depth_rms_mm": 0.5333681176825912,
+        "depth_max_mm": 1.4042082180464739,
+        "normal_rms_deg": 1.8232188000752665,
+        "normal_max_deg": 5.16107574570376
+      },
+      "standoff": 0.7,
+      "reach_table": [
+        [
+          0.55,
+          0.0
+        ],
+        [
+          0.58,
+          0.14
+        ],
+        [
+          0.61,
+          0.14
+        ],
+        [
+          0.64,
+          0.14
+        ],
+        [
+          0.67,
+          0.14
+        ],
+        [
+          0.7,
+          0.14
+        ],
+        [
+          0.73,
+          0.11
+        ],
+        [
+          0.76,
+          0.09
+        ],
+        [
+          0.79,
+          0.03
+        ],
+        [
+          0.82,
+          0.0
+        ],
+        [
+          0.85,
+          0.0
+        ],
+        [
+          0.88,
+          0.0
+        ],
+        [
+          0.91,
+          0.0
+        ],
+        [
+          0.94,
+          0.0
+        ]
+      ],
+      "patches": [
+        [
+          0.0,
+          0.14
+        ]
+      ]
+    }
+  },
+  "markers": {},
+  "orders": [
+    {
+      "t": 0.2,
+      "queue": [
+        "3"
+      ],
+      "cost_m": 5.48,
+      "ms": 7.1
+    },
+    {
+      "t": 0.8,
+      "queue": [
+        "3",
+        "11"
+      ],
+      "cost_m": 8.3,
+      "ms": 37.0
+    },
+    {
+      "t": 41.76,
+      "queue": [
+        "3.0",
+        "11"
+      ],
+      "cost_m": 4.34,
+      "ms": 14.8
+    },
+    {
+      "t": 236.23,
+      "queue": [
+        "11"
+      ],
+      "cost_m": 3.37,
+      "ms": 0.0
+    },
+    {
+      "t": 264.79,
+      "queue": [
+        "11.0"
+      ],
+      "cost_m": 1.05,
+      "ms": 1.2
+    }
+  ],
+  "paint": {
+    "3": {
+      "coverage": 0.4731851851851852,
+      "force_mean": 4.965685790791334,
+      "force_p5_p95": [
+        0.34455648931010746,
+        11.032381735771235
+      ],
+      "within_20pct": 0.06073888541014402,
+      "outside_target": 0.14093598708983324
+    },
+    "11": {
+      "coverage": 0.0,
+      "force_mean": null,
+      "force_p5_p95": null,
+      "within_20pct": null,
+      "outside_target": 0.0
+    },
+    "17": {
+      "coverage": 0.0,
+      "force_mean": null,
+      "force_p5_p95": null,
+      "within_20pct": null,
+      "outside_target": 0.0
+    },
+    "5": {
+      "coverage": 0.0,
+      "force_mean": null,
+      "force_p5_p95": null,
+      "within_20pct": null,
+      "outside_target": 0.0
+    }
+  },
+  "localisation": {
+    "odometry_err_max_m": 1.1015474117682322,
+    "odometry_err_final_m": 1.0781224764556847,
+    "heading_err_max_deg": 24.388052682914672,
+    "marker_corrections": 141
+  },
+  "done": [],
+  "failed": [
+    "3.0",
+    "11.0"
+  ],
+  "aborted": null,
+  "sim_time_s": 1003.4819999900946,
+  "wall_time_s": 1828.5765399932861,
+  "walking": {
+    "max_tilt_deg": 18.804063405121564,
+    "distance_m": 26.831000986250682
+  },
+  "events": [
+    {
+      "t": 0.0,
+      "msg": "patrol: 9 waypoints sampled from the map's free space"
+    },
+    {
+      "t": 0.0,
+      "msg": "start: work orders [3, 5, 11, 17], map known, marker positions + surfaces unknown"
+    },
+    {
+      "t": 0.2,
+      "msg": "marker 3 confirmed at [3.07 2.4  0.41] (est. frame)"
+    },
+    {
+      "t": 0.2,
+      "msg": "queue -> ['3'] (travel cost 5.5 m)"
+    },
+    {
+      "t": 0.8,
+      "msg": "marker 11 confirmed at [ 5.53 -0.81  0.41] (est. frame)"
+    },
+    {
+      "t": 0.8,
+      "msg": "queue -> ['3', '11'] (travel cost 8.3 m)"
+    },
+    {
+      "t": 7.71,
+      "msg": "A* to area 3: survey pose: 5.4 m (8 ms)"
+    },
+    {
+      "t": 41.76,
+      "msg": "area 3: surface model 2201 cells, depth range -19..-14 mm; vs real surface: depth err 0.4 mm RMS, normal err 1.7 deg RMS"
+    },
+    {
+      "t": 41.76,
+      "msg": "area 3: reach plan (9.0 s): standoff 0.61 m, reachable 750 mm wide -> 1 patch(es) [0.75] m"
+    },
+    {
+      "t": 41.76,
+      "msg": "queue -> ['3.0', '11'] (travel cost 4.3 m)"
+    },
+    {
+      "t": 67.36,
+      "msg": "area 3: marker not in view from here - using its map anchor"
+    },
+    {
+      "t": 67.36,
+      "msg": "area 3.0: dock off by 46 mm / 0.8 deg -> correct"
+    },
+    {
+      "t": 73.67,
+      "msg": "area 3: marker not in view from here - using its map anchor"
+    },
+    {
+      "t": 73.67,
+      "msg": "area 3.0: dock off by 47 mm / 0.8 deg -> correct"
+    },
+    {
+      "t": 78.71,
+      "msg": "area 3: marker not in view from here - using its map anchor"
+    },
+    {
+      "t": 80.02,
+      "msg": "area 3: marker not in view from here - using its map anchor"
+    },
+    {
+      "t": 80.02,
+      "msg": "area 3.0: hand-off, true dock error 97 mm / 12.6 deg (odometry vs truth 133 mm / 15.8 deg); 0.75 x 0.16 m, 17 raster segments, IK margin 0.11, 156 s"
+    },
+    {
+      "t": 236.23,
+      "msg": "area 3.0 FAILED (no contact): F 2.61 N (rms err 4.42, p5-p95 0.0-10.3), contact lost 53.7 %, base drift 0.4 mm"
+    },
+    {
+      "t": 236.23,
+      "msg": "queue -> ['11'] (travel cost 3.4 m)"
+    },
+    {
+      "t": 236.23,
+      "msg": "A* to area 11: survey pose: 3.2 m (6 ms)"
+    },
+    {
+      "t": 264.79,
+      "msg": "area 11: surface model 449 cells, depth range -91..-61 mm; vs real surface: depth err 0.5 mm RMS, normal err 1.8 deg RMS"
+    },
+    {
+      "t": 264.79,
+      "msg": "area 11: reach plan (1.6 s): standoff 0.70 m, reachable 140 mm wide -> 1 patch(es) [0.14] m"
+    },
+    {
+      "t": 264.79,
+      "msg": "queue -> ['11.0'] (travel cost 1.1 m)"
+    },
+    {
+      "t": 286.69,
+      "msg": "area 11: marker not in view from here - using its map anchor"
+    },
+    {
+      "t": 286.69,
+      "msg": "area 11.0: dock off by 46 mm / 0.1 deg -> correct"
+    },
+    {
+      "t": 289.27,
+      "msg": "area 11: marker not in view from here - using its map anchor"
+    },
+    {
+      "t": 290.58,
+      "msg": "area 11: marker not in view from here - using its map anchor"
+    },
+    {
+      "t": 290.58,
+      "msg": "area 11.0: hand-off, true dock error 140 mm / 3.2 deg (odometry vs truth 276 mm / 7.1 deg); 0.14 x 0.16 m, 17 raster segments, IK margin 0.12, 49 s"
+    },
+    {
+      "t": 345.26,
+      "msg": "area 11.0 FAILED (no contact): F 0.00 N (rms err 5.00, p5-p95 0.0-0.0), contact lost 100.0 %, base drift 0.1 mm"
+    },
+    {
+      "t": 345.26,
+      "msg": "A* to patrol: 3.9 m (10 ms)"
+    },
+    {
+      "t": 369.74,
+      "msg": "A* to patrol: 3.0 m (6 ms)"
+    },
+    {
+      "t": 390.52,
+      "msg": "A* to patrol: 3.1 m (7 ms)"
+    },
+    {
+      "t": 412.12,
+      "msg": "A* to patrol: 3.2 m (15 ms)"
+    },
+    {
+      "t": 510.42,
+      "msg": "A* to patrol: 5.2 m via stairs (3 ms)"
+    },
+    {
+      "t": 608.73,
+      "msg": "A* to patrol: 8.5 m via stairs (17 ms)"
+    },
+    {
+      "t": 707.04,
+      "msg": "A* to patrol: 11.6 m via stairs (20 ms)"
+    },
+    {
+      "t": 805.36,
+      "msg": "A* to patrol: 11.4 m via stairs (61 ms)"
+    },
+    {
+      "t": 903.67,
+      "msg": "A* to patrol: 14.7 m via stairs (101 ms)"
+    },
+    {
+      "t": 1001.98,
+      "msg": "mission complete: done [], failed ['3.0', '11.0']"
+    }
+  ],
+  "policy": "moe_cts",
+  "panel_seed": 4,
+  "pipe_radius": [
+    0.11,
+    0.13
+  ]
+}

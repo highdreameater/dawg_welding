@@ -1,0 +1,686 @@
+{
+  "tasks": {
+    "3.0": {
+      "u_range": [
+        0.05921052631578947,
+        0.7302631578947368
+      ],
+      "force_mean": 4.98966082785531,
+      "force_rms_err": 0.6443371269874744,
+      "force_p5_p95": [
+        3.992614124346641,
+        6.065786566307031
+      ],
+      "contact_lost": 0.0,
+      "base_drift_mm": 0.3811316766830111,
+      "wbc_qp_failures": 0,
+      "ik_margin": 0.10980680693658158,
+      "approach_wait_s": 0.25,
+      "true_dock_err_mm_deg": [
+        91.23769611983562,
+        0.904104478744967
+      ]
+    },
+    "3.0r0": {
+      "u_range": [
+        0.0,
+        0.05921052631578947
+      ],
+      "force_mean": 4.977932967477296,
+      "force_rms_err": 0.7268995408753728,
+      "force_p5_p95": [
+        3.969514810698867,
+        6.186034566782746
+      ],
+      "contact_lost": 0.0,
+      "base_drift_mm": 0.23255649137283835,
+      "wbc_qp_failures": 0,
+      "ik_margin": 0.13289568958045286,
+      "approach_wait_s": 0.26,
+      "true_dock_err_mm_deg": [
+        66.24963028458484,
+        0.13169193432410592
+      ]
+    },
+    "11.0": {
+      "u_range": [
+        0.0,
+        0.14
+      ],
+      "force_mean": 5.05363718987069,
+      "force_rms_err": 0.8751085733418141,
+      "force_p5_p95": [
+        3.698579025174363,
+        6.351019652038763
+      ],
+      "contact_lost": 0.0,
+      "base_drift_mm": 0.10104659876832082,
+      "wbc_qp_failures": 0,
+      "ik_margin": 0.11478786017689749,
+      "approach_wait_s": 0.58,
+      "true_dock_err_mm_deg": [
+        61.75574240004589,
+        1.8521094269684797
+      ]
+    },
+    "17.0": {
+      "u_range": [
+        0.0,
+        0.14
+      ],
+      "force_mean": 5.065810050124471,
+      "force_rms_err": 1.0182185590781623,
+      "force_p5_p95": [
+        3.587774317171348,
+        6.72708340708676
+      ],
+      "contact_lost": 0.0,
+      "base_drift_mm": 0.1043678426835704,
+      "wbc_qp_failures": 0,
+      "ik_margin": 0.12636522456175522,
+      "approach_wait_s": 0.39,
+      "true_dock_err_mm_deg": [
+        60.59386365613806,
+        0.41996874093255326
+      ]
+    }
+  },
+  "surveys": {
+    "3": {
+      "model": {
+        "kind": "thin-plate spline",
+        "points": 12437,
+        "cells": 1933,
+        "coverage": 0.9978424131778765,
+        "area_coverage": 1.0,
+        "depth_range_mm": [
+          -11.188005408847243,
+          -7.037915748509094
+        ]
+      },
+      "accuracy": {
+        "depth_rms_mm": 0.40640371709326006,
+        "depth_max_mm": 1.3783996170023405,
+        "normal_rms_deg": 1.5772076874622294,
+        "normal_max_deg": 4.785343436190948
+      },
+      "standoff": 0.64,
+      "reach_table": [
+        [
+          0.55,
+          0.0
+        ],
+        [
+          0.58,
+          0.75
+        ],
+        [
+          0.61,
+          0.75
+        ],
+        [
+          0.64,
+          0.75
+        ],
+        [
+          0.67,
+          0.69
+        ],
+        [
+          0.7,
+          0.63
+        ],
+        [
+          0.73,
+          0.51
+        ],
+        [
+          0.76,
+          0.39
+        ],
+        [
+          0.79,
+          0.18
+        ],
+        [
+          0.82,
+          0.0
+        ],
+        [
+          0.85,
+          0.0
+        ],
+        [
+          0.88,
+          0.0
+        ],
+        [
+          0.91,
+          0.0
+        ],
+        [
+          0.94,
+          0.0
+        ]
+      ],
+      "patches": [
+        [
+          0.0,
+          0.75
+        ]
+      ]
+    },
+    "11": {
+      "model": {
+        "kind": "thin-plate spline",
+        "points": 2520,
+        "cells": 386,
+        "coverage": 0.9977413890457368,
+        "area_coverage": 1.0,
+        "depth_range_mm": [
+          -85.1701740705164,
+          -54.76371511709258
+        ]
+      },
+      "accuracy": {
+        "depth_rms_mm": 0.4411460877726105,
+        "depth_max_mm": 1.0190004056207236,
+        "normal_rms_deg": 1.5457267628599654,
+        "normal_max_deg": 4.140342828676492
+      },
+      "standoff": 0.7,
+      "reach_table": [
+        [
+          0.55,
+          0.0
+        ],
+        [
+          0.58,
+          0.14
+        ],
+        [
+          0.61,
+          0.14
+        ],
+        [
+          0.64,
+          0.14
+        ],
+        [
+          0.67,
+          0.14
+        ],
+        [
+          0.7,
+          0.14
+        ],
+        [
+          0.73,
+          0.09
+        ],
+        [
+          0.76,
+          0.06
+        ],
+        [
+          0.79,
+          0.03
+        ],
+        [
+          0.82,
+          0.0
+        ],
+        [
+          0.85,
+          0.0
+        ],
+        [
+          0.88,
+          0.0
+        ],
+        [
+          0.91,
+          0.0
+        ],
+        [
+          0.94,
+          0.0
+        ]
+      ],
+      "patches": [
+        [
+          0.0,
+          0.14
+        ]
+      ]
+    },
+    "17": {
+      "model": {
+        "kind": "thin-plate spline",
+        "points": 2220,
+        "cells": 349,
+        "coverage": 0.9862601166948993,
+        "area_coverage": 1.0,
+        "depth_range_mm": [
+          -80.86177229851161,
+          -56.25861443627219
+        ]
+      },
+      "accuracy": {
+        "depth_rms_mm": 0.6729083625211838,
+        "depth_max_mm": 1.3038598531519772,
+        "normal_rms_deg": 1.991152828947631,
+        "normal_max_deg": 5.7945542643978705
+      },
+      "standoff": 0.7,
+      "reach_table": [
+        [
+          0.55,
+          0.0
+        ],
+        [
+          0.58,
+          0.14
+        ],
+        [
+          0.61,
+          0.14
+        ],
+        [
+          0.64,
+          0.14
+        ],
+        [
+          0.67,
+          0.14
+        ],
+        [
+          0.7,
+          0.14
+        ],
+        [
+          0.73,
+          0.12
+        ],
+        [
+          0.76,
+          0.06
+        ],
+        [
+          0.79,
+          0.0
+        ],
+        [
+          0.82,
+          0.0
+        ],
+        [
+          0.85,
+          0.0
+        ],
+        [
+          0.88,
+          0.0
+        ],
+        [
+          0.91,
+          0.0
+        ],
+        [
+          0.94,
+          0.0
+        ]
+      ],
+      "patches": [
+        [
+          0.0,
+          0.14
+        ]
+      ]
+    }
+  },
+  "markers": {},
+  "orders": [
+    {
+      "t": 0.2,
+      "queue": [
+        "3"
+      ],
+      "cost_m": 5.48,
+      "ms": 7.4
+    },
+    {
+      "t": 0.8,
+      "queue": [
+        "3",
+        "11"
+      ],
+      "cost_m": 8.31,
+      "ms": 37.3
+    },
+    {
+      "t": 28.97,
+      "queue": [
+        "3.0",
+        "11"
+      ],
+      "cost_m": 4.32,
+      "ms": 13.1
+    },
+    {
+      "t": 194.91,
+      "queue": [
+        "3.0r0",
+        "11"
+      ],
+      "cost_m": 4.95,
+      "ms": 10.9
+    },
+    {
+      "t": 241.82,
+      "queue": [
+        "11"
+      ],
+      "cost_m": 3.38,
+      "ms": 0.0
+    },
+    {
+      "t": 266.1,
+      "queue": [
+        "11.0"
+      ],
+      "cost_m": 1.07,
+      "ms": 1.2
+    },
+    {
+      "t": 433.89,
+      "queue": [
+        "5"
+      ],
+      "cost_m": 5.02,
+      "ms": 7.4
+    },
+    {
+      "t": 442.99,
+      "queue": [
+        "5",
+        "17"
+      ],
+      "cost_m": 7.3,
+      "ms": 41.9
+    },
+    {
+      "t": 458.65,
+      "queue": [
+        "17"
+      ],
+      "cost_m": 5.06,
+      "ms": 15.2
+    },
+    {
+      "t": 489.67,
+      "queue": [
+        "17.0"
+      ],
+      "cost_m": 1.0,
+      "ms": 1.1
+    }
+  ],
+  "paint": {
+    "3": {
+      "coverage": 0.981925925925926,
+      "force_mean": 5.070004082416096,
+      "force_p5_p95": [
+        4.018822631116246,
+        6.366553960187211
+      ],
+      "within_20pct": 0.8684369342184671,
+      "outside_target": 0.14167314167314168
+    },
+    "11": {
+      "coverage": 0.9876543209876543,
+      "force_mean": 4.978505953994772,
+      "force_p5_p95": [
+        3.5349637475549747,
+        6.346347281018269
+      ],
+      "within_20pct": 0.709375,
+      "outside_target": 0.20199501246882792
+    },
+    "17": {
+      "coverage": 0.9861111111111112,
+      "force_mean": 5.000190345288134,
+      "force_p5_p95": [
+        3.4834091505790403,
+        6.779409043934838
+      ],
+      "within_20pct": 0.5727699530516432,
+      "outside_target": 0.24468085106382978
+    },
+    "5": {
+      "coverage": 0.0,
+      "force_mean": null,
+      "force_p5_p95": null,
+      "within_20pct": null,
+      "outside_target": 0.0
+    }
+  },
+  "localisation": {
+    "odometry_err_max_m": 0.6936674706519758,
+    "odometry_err_final_m": 0.6469628184605246,
+    "heading_err_max_deg": 2.204005701038474,
+    "marker_corrections": 221
+  },
+  "done": [
+    "3.0",
+    "3.0r0",
+    "11.0",
+    "17.0"
+  ],
+  "failed": [
+    "5"
+  ],
+  "aborted": null,
+  "sim_time_s": 556.7780000006577,
+  "wall_time_s": 6600.387777805328,
+  "walking": {
+    "max_tilt_deg": 22.278391924086208,
+    "distance_m": 38.98321440244714
+  },
+  "events": [
+    {
+      "t": 0.0,
+      "msg": "patrol: 9 waypoints sampled from the map's free space"
+    },
+    {
+      "t": 0.0,
+      "msg": "start: work orders [3, 5, 11, 17], map known, marker positions + surfaces unknown"
+    },
+    {
+      "t": 0.2,
+      "msg": "marker 3 confirmed at [3.07 2.4  0.41] (est. frame)"
+    },
+    {
+      "t": 0.2,
+      "msg": "queue -> ['3'] (travel cost 5.5 m)"
+    },
+    {
+      "t": 0.8,
+      "msg": "marker 11 confirmed at [ 5.53 -0.83  0.41] (est. frame)"
+    },
+    {
+      "t": 0.8,
+      "msg": "queue -> ['3', '11'] (travel cost 8.3 m)"
+    },
+    {
+      "t": 7.71,
+      "msg": "A* to area 3: survey pose: 5.4 m (8 ms)"
+    },
+    {
+      "t": 28.97,
+      "msg": "area 3: surface model 1933 cells, depth range -11..-7 mm; vs real surface: depth err 0.4 mm RMS, normal err 1.6 deg RMS"
+    },
+    {
+      "t": 28.97,
+      "msg": "area 3: reach plan (7.9 s): standoff 0.64 m, reachable 750 mm wide -> 1 patch(es) [0.75] m"
+    },
+    {
+      "t": 28.97,
+      "msg": "queue -> ['3.0', '11'] (travel cost 4.3 m)"
+    },
+    {
+      "t": 52.65,
+      "msg": "area 3.0: at the stance, 79 mm / 0.7 deg from the marker-relative dock"
+    },
+    {
+      "t": 52.65,
+      "msg": "area 3.0: reachable u 0.059..0.730 of 0.000..0.750 m"
+    },
+    {
+      "t": 52.65,
+      "msg": "area 3.0: out-of-reach rest 0.059 m queued as 3.0r0"
+    },
+    {
+      "t": 52.65,
+      "msg": "area 3.0: hand-off, true dock error 91 mm / 0.9 deg (odometry vs truth 100 mm / 0.7 deg); 0.67 x 0.16 m, 17 raster segments, IK margin 0.11, 142 s"
+    },
+    {
+      "t": 194.91,
+      "msg": "area 3.0 done: F 4.99 N (rms err 0.64, p5-p95 4.0-6.1), contact lost 0.0 %, base drift 0.4 mm"
+    },
+    {
+      "t": 194.91,
+      "msg": "queue -> ['3.0r0', '11'] (travel cost 5.0 m)"
+    },
+    {
+      "t": 209.69,
+      "msg": "area 3.0r0: at the stance, 52 mm / 0.2 deg from the marker-relative dock"
+    },
+    {
+      "t": 209.69,
+      "msg": "area 3.0r0: hand-off, true dock error 66 mm / 0.1 deg (odometry vs truth 110 mm / 0.4 deg); 0.06 x 0.16 m, 17 raster segments, IK margin 0.13, 32 s"
+    },
+    {
+      "t": 241.82,
+      "msg": "area 3.0r0 done: F 4.98 N (rms err 0.73, p5-p95 4.0-6.2), contact lost 0.0 %, base drift 0.2 mm"
+    },
+    {
+      "t": 241.82,
+      "msg": "queue -> ['11'] (travel cost 3.4 m)"
+    },
+    {
+      "t": 241.82,
+      "msg": "A* to area 11: survey pose: 3.2 m (6 ms)"
+    },
+    {
+      "t": 266.1,
+      "msg": "area 11: surface model 386 cells, depth range -85..-55 mm; vs real surface: depth err 0.4 mm RMS, normal err 1.5 deg RMS"
+    },
+    {
+      "t": 266.1,
+      "msg": "area 11: reach plan (1.8 s): standoff 0.70 m, reachable 140 mm wide -> 1 patch(es) [0.14] m"
+    },
+    {
+      "t": 266.1,
+      "msg": "queue -> ['11.0'] (travel cost 1.1 m)"
+    },
+    {
+      "t": 284.38,
+      "msg": "area 11.0: at the stance, 47 mm / 1.7 deg from the marker-relative dock"
+    },
+    {
+      "t": 284.38,
+      "msg": "area 11.0: hand-off, true dock error 62 mm / 1.9 deg (odometry vs truth 133 mm / 0.7 deg); 0.14 x 0.16 m, 17 raster segments, IK margin 0.11, 49 s"
+    },
+    {
+      "t": 333.65,
+      "msg": "area 11.0 done: F 5.05 N (rms err 0.88, p5-p95 3.7-6.4), contact lost 0.0 %, base drift 0.1 mm"
+    },
+    {
+      "t": 333.65,
+      "msg": "A* to patrol: 3.9 m (9 ms)"
+    },
+    {
+      "t": 357.21,
+      "msg": "A* to patrol: 3.0 m (6 ms)"
+    },
+    {
+      "t": 378.13,
+      "msg": "A* to patrol: 3.2 m (6 ms)"
+    },
+    {
+      "t": 398.77,
+      "msg": "A* to patrol: 3.1 m (14 ms)"
+    },
+    {
+      "t": 418.29,
+      "msg": "A* to patrol: 5.2 m via stairs (3 ms)"
+    },
+    {
+      "t": 433.89,
+      "msg": "marker 5 confirmed at [15.02 -2.21  0.4 ] (est. frame)"
+    },
+    {
+      "t": 433.89,
+      "msg": "queue -> ['5'] (travel cost 5.0 m)"
+    },
+    {
+      "t": 438.19,
+      "msg": "A* to area 5: survey pose: 4.0 m (9 ms)"
+    },
+    {
+      "t": 442.99,
+      "msg": "marker 17 confirmed at [19.46  1.28  0.42] (est. frame)"
+    },
+    {
+      "t": 442.99,
+      "msg": "queue -> ['5', '17'] (travel cost 7.3 m)"
+    },
+    {
+      "t": 458.65,
+      "msg": "area 5: marker not in view at the survey pose - survey skipped"
+    },
+    {
+      "t": 458.65,
+      "msg": "queue -> ['17'] (travel cost 5.1 m)"
+    },
+    {
+      "t": 458.65,
+      "msg": "A* to area 17: survey pose: 5.0 m (17 ms)"
+    },
+    {
+      "t": 489.67,
+      "msg": "area 17: surface model 349 cells, depth range -81..-56 mm; vs real surface: depth err 0.7 mm RMS, normal err 2.0 deg RMS"
+    },
+    {
+      "t": 489.67,
+      "msg": "area 17: reach plan (1.6 s): standoff 0.70 m, reachable 140 mm wide -> 1 patch(es) [0.14] m"
+    },
+    {
+      "t": 489.67,
+      "msg": "queue -> ['17.0'] (travel cost 1.0 m)"
+    },
+    {
+      "t": 506.97,
+      "msg": "area 17.0: at the stance, 50 mm / 0.7 deg from the marker-relative dock"
+    },
+    {
+      "t": 506.97,
+      "msg": "area 17.0: hand-off, true dock error 61 mm / 0.4 deg (odometry vs truth 644 mm / -0.1 deg); 0.14 x 0.16 m, 17 raster segments, IK margin 0.13, 48 s"
+    },
+    {
+      "t": 555.28,
+      "msg": "area 17.0 done: F 5.07 N (rms err 1.02, p5-p95 3.6-6.7), contact lost 0.0 %, base drift 0.1 mm"
+    },
+    {
+      "t": 555.28,
+      "msg": "mission complete: done ['3.0', '3.0r0', '11.0', '17.0'], failed ['5']"
+    }
+  ],
+  "policy": "moe_cts",
+  "panel_seed": 4,
+  "pipe_radius": [
+    0.11,
+    0.13
+  ]
+}

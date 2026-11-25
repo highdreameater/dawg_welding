@@ -1,0 +1,74 @@
+class_name: rsl_rl.moe_cts:MoeCtsRunner
+seed: 42
+device: cuda:0
+num_steps_per_env: 24
+max_iterations: 100000
+obs_groups:
+  policy:
+  - policy
+  critic:
+  - critic
+clip_actions: null
+clip_rewards: 10.0
+save_interval: 500
+log_interval: 10
+experiment_name: go2_mixed_moe_cts
+run_name: mixed1.3.2resume
+logger: swanlab
+wandb_project: go2-rl-lab
+swanlab_project: go2-rl-lab
+resume: true
+load_run: .*
+load_checkpoint: logs/rsl_rl/go2_mixed_moe_cts/2026-10-12_10-32-30_mixed1.3.1.alpha.2/model_22500.pt
+policy:
+  init_noise_std: 1.0
+  noise_std_type: scalar
+  state_dependent_std: false
+  actor_obs_normalization: false
+  critic_obs_normalization: false
+  actor_hidden_dims:
+  - 512
+  - 256
+  - 128
+  critic_hidden_dims:
+  - 512
+  - 256
+  - 128
+  teacher_encoder_hidden_dims:
+  - 512
+  - 256
+  student_encoder_hidden_dims:
+  - 512
+  - 256
+  - 256
+  expert_num: 8
+  latent_dim: 32
+  norm_type: l2norm
+  activation: elu
+algorithm:
+  num_learning_epochs: 5
+  num_mini_batches: 4
+  learning_rate: 0.001
+  student_encoder_learning_rate: 0.001
+  schedule: adaptive
+  gamma: 0.99
+  lam: 0.95
+  entropy_coef: 0.01
+  desired_kl: 0.01
+  max_grad_norm: 1.0
+  value_loss_coef: 1.0
+  load_balance_coef: 0.01
+  use_clipped_value_loss: true
+  clip_param: 0.2
+  teacher_env_ratio: 0.75
+  betas: !!python/tuple
+  - 0.9
+  - 0.999
+  weight_decay: 0.0
+  normalize_advantage_per_mini_batch: false
+robogauge:
+  task_name: go2_lab_1.3.1
+  enabled: true
+  port: 9960
+  submit_interval: 500
+  poll_interval: 60.0

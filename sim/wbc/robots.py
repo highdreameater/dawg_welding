@@ -1,4 +1,4 @@
-"""Robot configurations for the stance WBC (quadruped + arm + welding torch), built from MuJoCo Menagerie models.
+"""Robot configurations for the stance WBC (Unitree Go2 + Z1 arm, optional welding torch), built from MuJoCo Menagerie models.
 
 Every model is rebuilt so that *all* leg and arm joints are driven by pure torque motors (the WBC outputs torques).
 """
@@ -36,6 +36,8 @@ class RobotCfg:
     brace_dz: float = 0.04
     sweep_amp: tuple = None     # stress test: per-arm-joint sweep amplitude [rad]
     wbc_gains: dict = field(default_factory=dict)  # StanceWBC kwargs overrides
+    seam_half: float = 0.15     # weld seam half-length along y [m]
+    arm_armature: float = None  # rotor inertia added to arm joints [kg m^2] (Menagerie Z1 has none)
     cam: dict = field(default_factory=lambda: dict(lookat=[0.5, 0, 0.3], distance=2.4, azimuth=140, elevation=-20))
     pipe_work_dist: float = 0.56  # base centre -> force-control arc on the pipe (reach with a tilted torch) [m]
     leg_passive: tuple = None     # (damping, frictionloss) override for the leg joints, e.g. to match the RL training sim
@@ -80,6 +82,47 @@ def anymal_c_z1():
     )
 
 
+def go2_z1_official():
+    """Go2 + Z1 on the official Unitree mount (aliengoZ1 rule), no torch by default (massless tool point 5 cm past the
+    flange). Used by sim/stance_demo.py, sim/terrain_demo.py, sim/myscene_demo.py, sim/aruco_mission_demo.py."""
+    legs = ["FL", "FR", "RL", "RR"]
+    leg = [f"{l}_{j}_joint" for l in legs for j in ("hip", "thigh", "calf")]
+    # default pose of the pretrained Go2 policies (wty-yy MoE-CTS / symmetry) -> clean RL <-> WBC hand-off
+    q0 = {}
+    for l in legs:
+        q0[f"{l}_hip_joint"] = 0.1 if l[1] == "L" else -0.1
+        q0[f"{l}_thigh_joint"] = 0.8 if l[0] == "F" else 1.0
+        q0[f"{l}_calf_joint"] = -1.5
+    tau = {j: (45.43 if "calf" in j else 23.7) for j in leg}  # Go2 motor limits (Menagerie)
+    z1 = ["joint1", "joint2", "joint3", "joint4", "joint5", "joint6"]
+    tau.update({"z1_" + j: (60.0 if j == "joint2" else 30.0) for j in z1})
+    return RobotCfg(
+        name="go2_z1_official",
+        scene_xml=os.path.join(MENAGERIE, "unitree_go2", "scene.xml"),
+        base_body="base", leg_joints=leg,
+        foot_bodies=[f"{l}_calf" for l in legs], foot_radius=0.022,
+        leg_q0=q0,
+        arm_joints=z1, arm_stow=np.array([0.0, 0.05, -0.05, 0.0, 0.0, 0.0]),
+        # no torch: massless tool point 5 cm past the Z1 flange
+        tau_limits=tau, torch_parent="z1_link06", torch_pos=0.051, torch_tip=0.05,
+        # reach map (tool down, seam +-0.10 m): exact for work-surface height >= 0.10 m, x 0.35..0.55 m.
+        # 12 cm-high beam at x = 0.42 m (front feet at x ~0.18-0.20 m)
+        workpiece_x=0.42, workpiece_half=(0.06, 0.20, 0.06),
+        ik_seeds=[[0, 1.2, -1.2, -0.3, 0, 0], [0, 1.6, -1.6, 0.2, 0, 0], [0, 0.9, -0.6, -0.8, 0, 0]],
+        # official Unitree mount rule (aliengoZ1_description): x = trunk_length/2 - 0.07, z = trunk_height/2
+        arm_xml=os.path.join(MENAGERIE, "unitree_z1", "z1.xml"), arm_mount=("base", (0.3762 / 2 - 0.07, 0.0, 0.114 / 2)),
+        arm_prefix="z1_", sweep_amp=(1.0, 0.35, 0.4, 0.5, 0, 0), brace_dz=0.03, seam_half=0.10,
+        # Without a torch the Z1 wrist link is ~inertia-free (0.29 kg, Menagerie armature 0) while its joint has 1 Nm
+        # friction -> friction compensation chatters and the wrist roll runs into its limit. Give the Z1 joints a
+        # realistic gearbox rotor inertia (same value Menagerie uses for the Go2 leg motors).
+        arm_armature=0.01,
+        # weld precision: arm disturbance observer (replaces fixed friction FF) while the tool is tracked in Cartesian
+        # space -> 0.08 mm RMS tool error (vs 2.2 mm with friction FF only)
+        wbc_gains=dict(kp_ee=2500.0, kd_ee=100.0, ki_ee=8000.0, dob_T=0.004, dob_cartesian_only=True),
+        cam=dict(lookat=[0.25, 0, 0.2], distance=1.5, azimuth=140, elevation=-20),
+    )
+
+
 def go2_z1(mount_x=0.10):
     """Unitree Go2 with a Unitree Z1 on top of the base, 10 cm ahead of the base centre. The arm + torch (5.6 kg) is
     ~37% of the bare Go2's mass. Mounted over the centre the Z1 only reaches ~0.5 m ahead at pipe height (the Go2 is
@@ -116,16 +159,16 @@ def go2_z1(mount_x=0.10):
     )
 
 
-ROBOTS = {"anymal_c_z1": anymal_c_z1, "go2_z1": go2_z1}  # Spot config lives in archive/spot/spot_robot_config.py
+# Robot + arm configs. To try another arm, add a config with a different arm_xml / arm_mount / arm_joints /
+# tau_limits (e.g. a Menagerie arm fetched with menagerie models ready: anybotics_anymal_c unitree_z1 unitree_go2).
+ROBOTS = {"anymal_c_z1": anymal_c_z1, "go2_z1": go2_z1, "go2_z1_official": go2_z1_official}
 
 
 CONTACT_TIP_RADIUS = 0.008
 
-
-def build_model(cfg: RobotCfg, torch_mass=1.2, workpiece=True, render_size=(1280, 720), world=None, contact_tip=False):
-    """workpiece: the stand-alone beam of sim/stance_demo.py (ignored when `world` is given).
-    world: a sim/world.py World (walls, obstacles, stations) added to the scene.
-    contact_tip: a frictionless ball at the torch tip that touches the pipe (collision bit 2) - for force control."""
+def build_model(cfg: RobotCfg, torch_mass=1.2, workpiece=True, render_size=(1280, 720), world=None, contact_tip=False,
+                scene_fn=None):
+    """scene_fn(spec): optional callback that adds world geometry (stairs, walls, ...) before compiling."""
     spec = mujoco.MjSpec.from_file(cfg.scene_xml)
     spec.visual.global_.offwidth, spec.visual.global_.offheight = render_size
     for k in list(spec.keys):  # keyframes (e.g. Go2 "home") no longer match once the arm is attached
@@ -138,9 +181,10 @@ def build_model(cfg: RobotCfg, torch_mass=1.2, workpiece=True, render_size=(1280
         frame.pos = list(pos)
         frame.attach_body(arm.worldbody.first_body(), cfg.arm_prefix, "")
         # the folded Z1 stow pose touches itself; arm self-collision is irrelevant for welding -> exclude
+        # (on small robots like Go2 the folded arm also rests on the trunk -> exclude arm-vs-base contacts too)
         arm_bodies = [b.name for b in spec.bodies if b.name.startswith(cfg.arm_prefix)]
         for i, b1 in enumerate(arm_bodies):
-            for b2 in arm_bodies[i + 1:]:
+            for b2 in arm_bodies[i + 1:] + [cfg.base_body]:
                 e = spec.add_exclude()
                 e.bodyname1, e.bodyname2 = b1, b2
 
@@ -150,15 +194,17 @@ def build_model(cfg: RobotCfg, torch_mass=1.2, workpiece=True, render_size=(1280
         assert len(spheres) == 1, f"expected one foot sphere in {b}, got {len(spheres)}"
         spheres[0].name = "foot_" + b
 
-    # welding torch on the last arm link (non-colliding: welding is a non-contact process)
+    # welding torch on the last arm link (non-colliding: welding is a non-contact process).
+    # torch_mass <= 0: no torch body/mass, only a massless tool point ("torch_tip" site) torch_tip beyond torch_pos.
     tb = spec.body(cfg.torch_parent).add_body()
     tb.name, tb.pos = "torch", [cfg.torch_pos, 0, 0]
-    neck = tb.add_geom()
-    neck.type, neck.fromto, neck.size = mujoco.mjtGeom.mjGEOM_CAPSULE, [0, 0, 0, cfg.torch_tip - 0.04, 0, 0], [0.022, 0, 0]
-    neck.mass, neck.contype, neck.conaffinity, neck.rgba, neck.group = torch_mass, 0, 0, [0.75, 0.2, 0.15, 1], 2
-    nozzle = tb.add_geom()
-    nozzle.type, nozzle.fromto, nozzle.size = mujoco.mjtGeom.mjGEOM_CYLINDER, [cfg.torch_tip - 0.04, 0, 0, cfg.torch_tip - 0.005, 0, 0], [0.012, 0, 0]
-    nozzle.mass, nozzle.contype, nozzle.conaffinity, nozzle.rgba, nozzle.group = 0.01, 0, 0, [0.8, 0.7, 0.3, 1], 2
+    if torch_mass > 0:
+        neck = tb.add_geom()
+        neck.type, neck.fromto, neck.size = mujoco.mjtGeom.mjGEOM_CAPSULE, [0, 0, 0, cfg.torch_tip - 0.04, 0, 0], [0.022, 0, 0]
+        neck.mass, neck.contype, neck.conaffinity, neck.rgba = torch_mass, 0, 0, [0.75, 0.2, 0.15, 1]
+        nozzle = tb.add_geom()
+        nozzle.type, nozzle.fromto, nozzle.size = mujoco.mjtGeom.mjGEOM_CYLINDER, [cfg.torch_tip - 0.04, 0, 0, cfg.torch_tip - 0.005, 0, 0], [0.012, 0, 0]
+        nozzle.mass, nozzle.contype, nozzle.conaffinity, nozzle.rgba = 0.01, 0, 0, [0.8, 0.7, 0.3, 1]
     tip = tb.add_site()
     tip.name, tip.pos, tip.size, tip.rgba = "torch_tip", [cfg.torch_tip, 0, 0], [0.006, 0, 0], [1, 0.4, 0, 1]
     if contact_tip:
@@ -181,6 +227,9 @@ def build_model(cfg: RobotCfg, torch_mass=1.2, workpiece=True, render_size=(1280
         s.pos, s.rgba = [cfg.workpiece_x, 0, 2 * hz + 0.0006], [0.1, 0.1, 0.1, 1]
         s.contype = s.conaffinity = 0
 
+    if scene_fn is not None:
+        scene_fn(spec)
+
     # replace every actuator by a torque motor with the robot's torque limit
     for a in list(spec.actuators):
         spec.delete(a)
@@ -200,6 +249,9 @@ def build_model(cfg: RobotCfg, torch_mass=1.2, workpiece=True, render_size=(1280
             model.dof_damping[dof], model.dof_frictionloss[dof] = cfg.leg_passive
     model.opt.timestep = 0.002
     model.opt.integrator = mujoco.mjtIntegrator.mjINT_IMPLICITFAST
+    if cfg.arm_armature is not None:
+        for j in cfg.arm_names():
+            model.dof_armature[model.jnt_dofadr[mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, j)]] = cfg.arm_armature
     return model
 
 

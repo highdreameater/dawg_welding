@@ -1,0 +1,32 @@
+[
+  {
+    "policy": "moe_cts",
+    "arm": false,
+    "scenario": "turn",
+    "step_height": null,
+    "fell": false,
+    "survived_s": 17.000000000000902,
+    "lin_vel_err": 0.07519345248988665,
+    "yaw_err": 0.18429742686780712,
+    "x_travel": 0.8081472193908107,
+    "max_base_z": 0.36137179135454156,
+    "mean_base_z": 0.3427235921500517,
+    "max_abs_roll_deg": 5.249881750511536,
+    "max_abs_pitch_deg": 7.953156841446063
+  },
+  {
+    "policy": "symmetry",
+    "arm": false,
+    "scenario": "turn",
+    "step_height": null,
+    "fell": false,
+    "survived_s": 17.000000000000902,
+    "lin_vel_err": 0.04698629618051973,
+    "yaw_err": 0.2220033644660934,
+    "x_travel": 0.988818457949111,
+    "max_base_z": 0.3622506958490117,
+    "mean_base_z": 0.3442213816697538,
+    "max_abs_roll_deg": 8.783871840786228,
+    "max_abs_pitch_deg": 12.594959633368239
+  }
+]

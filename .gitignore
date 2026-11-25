@@ -1,6 +1,6 @@
-# external clones (fetched by scripts/setup_assets.sh)
+# external models (fetched by scripts/setup_assets.sh)
 third_party/
-archive/spot/third_party/
+description/upstream/
 
 # runtime noise
 MUJOCO_LOG.TXT
@@ -9,8 +9,12 @@ __pycache__/
 .DS_Store
 .vscode/
 .idea/
-
-# legged_gym training outputs / server deps
-locomotion/legged_gym/logs/
-locomotion/deps/
 *.egg-info/
+
+# dockyard: raw downloads + generated meshes (re-created by scripts/fetch_dockyard_assets.py / the scene builder)
+assets/dockyard/raw/
+assets/dockyard/generated/
+
+# myscene: source .blend is 646 MB (over the GitHub file limit) + raw Blender export; converted meshes are kept
+assets/myscene.blend
+assets/myscene_export/raw/

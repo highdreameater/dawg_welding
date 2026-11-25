@@ -1,0 +1,87 @@
+{
+  "source": {
+    "author": "Scottish Maritime Museum (https://sketchfab.com/ScottishMaritimeMuseum)",
+    "license": "CC0-1.0 (http://creativecommons.org/publicdomain/zero/1.0/)",
+    "source": "https://sketchfab.com/3d-models/mv-spartan-e2c3ced464f14e3b864f15871bf6d87d",
+    "title": "MV Spartan"
+  },
+  "extent_m": [
+    22.956,
+    7.626,
+    10.192
+  ],
+  "meshes": [
+    {
+      "name": "spartan_00_windowswithtextures",
+      "obj": "spartan_00_windowswithtextures.obj",
+      "texture": "WindowswithTextures_Material_t1_l1_u1_v1_diffuse.png",
+      "material": "WindowswithTextures_Material_t1_l1_u1_v1",
+      "faces": 1304,
+      "is_hull": false
+    },
+    {
+      "name": "spartan_01_bars",
+      "obj": "spartan_01_bars.obj",
+      "texture": "bars_Material_u1_v1_diffuse.png",
+      "material": "bars_Material_u1_v1",
+      "faces": 1018,
+      "is_hull": false
+    },
+    {
+      "name": "spartan_02_hull",
+      "obj": "spartan_02_hull.obj",
+      "texture": "default_diffuse.png",
+      "material": "default",
+      "faces": 49953,
+      "is_hull": true
+    },
+    {
+      "name": "spartan_03_hull",
+      "obj": "spartan_03_hull.obj",
+      "texture": "default_diffuse.png",
+      "material": "default",
+      "faces": 78214,
+      "is_hull": true
+    },
+    {
+      "name": "spartan_04_hull",
+      "obj": "spartan_04_hull.obj",
+      "texture": "default_diffuse.png",
+      "material": "default",
+      "faces": 86671,
+      "is_hull": true
+    },
+    {
+      "name": "spartan_05_hull",
+      "obj": "spartan_05_hull.obj",
+      "texture": "default_diffuse.png",
+      "material": "default",
+      "faces": 90829,
+      "is_hull": true
+    },
+    {
+      "name": "spartan_06_hull",
+      "obj": "spartan_06_hull.obj",
+      "texture": "default_diffuse.png",
+      "material": "default",
+      "faces": 94386,
+      "is_hull": true
+    },
+    {
+      "name": "spartan_07_hull",
+      "obj": "spartan_07_hull.obj",
+      "texture": "default_diffuse.png",
+      "material": "default",
+      "faces": 98714,
+      "is_hull": true
+    },
+    {
+      "name": "spartan_08_spartandoor",
+      "obj": "spartan_08_spartandoor.obj",
+      "texture": "SpartanDoor_Low_withTX_Material_t2_l0_u1_v1_diffuse.png",
+      "material": "SpartanDoor_Low_withTX_Material_t2_l0_u1_v1",
+      "faces": 9992,
+      "is_hull": false
+    }
+  ]
+}

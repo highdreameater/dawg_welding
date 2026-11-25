@@ -1,0 +1,38 @@
+[
+  {
+    "policy": "moe_cts",
+    "on_platform_s": 12.64,
+    "reached_goal_s": 18.42,
+    "handover_s": 19.92,
+    "stop_pose": [
+      5.988,
+      -0.02,
+      1.24
+    ],
+    "crack_ik_residual_mm": 0.0012,
+    "completed": true,
+    "weld_tool_err_rms_mm": 0.016715800469146107,
+    "weld_tool_err_max_mm": 0.09024066524504885,
+    "base_drift_during_arm_mm": 0.3378951398797572,
+    "base_tilt_during_arm_deg": 0.13334856702693051,
+    "handover_base_jump_mm": 0.36900659042897105
+  },
+  {
+    "policy": "symmetry",
+    "on_platform_s": 12.32,
+    "reached_goal_s": 16.84,
+    "handover_s": 18.34,
+    "stop_pose": [
+      6.029,
+      -0.006,
+      1.62
+    ],
+    "crack_ik_residual_mm": 0.0035,
+    "completed": true,
+    "weld_tool_err_rms_mm": 0.016779383884538406,
+    "weld_tool_err_max_mm": 0.07317830279072346,
+    "base_drift_during_arm_mm": 0.3136187439518949,
+    "base_tilt_during_arm_deg": 0.13435272581384528,
+    "handover_base_jump_mm": 1.0201652384713042
+  }
+]

@@ -29,7 +29,7 @@ class PathFollower:
         self.i += int(np.argmin(np.linalg.norm(win - p, axis=1)))
         d_goal = np.linalg.norm(self.goal - p)
         e_yaw_goal = wrap(self.goal_yaw - yaw)
-        if d_goal < self.pos_tol and abs(e_yaw_goal) < self.yaw_tol:
+        if d_goal < max(self.pos_tol, self.stop_radius) and abs(e_yaw_goal) < self.yaw_tol:   # inside stop_radius it no longer translates
             self.done = True
         if self.done:
             return np.zeros(3)

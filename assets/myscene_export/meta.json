@@ -1,0 +1,557 @@
+{
+  "source": "assets/myscene.blend (user-provided)",
+  "meshes": [
+    {
+      "material": "ground_rocks_18.001",
+      "object": "ground_rocks_18.001",
+      "obj": "ms_ground_rocks_18_001.obj",
+      "texture": "packed_albedo_001.png",
+      "rgba": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "faces": 349496,
+      "lo": [
+        25.49,
+        -3.952,
+        -0.166
+      ],
+      "hi": [
+        37.767,
+        5.992,
+        0.531
+      ]
+    },
+    {
+      "material": "ground_rocks_18",
+      "object": "ground_rocks_18",
+      "obj": "ms_ground_rocks_18.obj",
+      "texture": "packed_albedo.png",
+      "rgba": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "faces": 349496,
+      "lo": [
+        17.467,
+        -3.952,
+        -0.166
+      ],
+      "hi": [
+        29.744,
+        5.992,
+        0.531
+      ]
+    },
+    {
+      "material": "texture_props",
+      "object": "Dock_B001",
+      "obj": "ms_texture_props.obj",
+      "texture": null,
+      "rgba": [
+        0.55,
+        0.52,
+        0.48,
+        1.0
+      ],
+      "faces": 356,
+      "lo": [
+        7.175,
+        20.397,
+        0.058
+      ],
+      "hi": [
+        26.377,
+        69.858,
+        4.897
+      ]
+    },
+    {
+      "material": "yel_grass",
+      "object": "body",
+      "obj": "ms_yel_grass.obj",
+      "texture": null,
+      "rgba": [
+        0.741,
+        0.655,
+        0.035,
+        1.0
+      ],
+      "faces": 380,
+      "lo": [
+        4.583,
+        10.674,
+        10.817
+      ],
+      "hi": [
+        4.89,
+        10.981,
+        11.341
+      ]
+    },
+    {
+      "material": "bl",
+      "object": "body",
+      "obj": "ms_bl.obj",
+      "texture": null,
+      "rgba": [
+        0.239,
+        0.239,
+        0.239,
+        1.0
+      ],
+      "faces": 21890,
+      "lo": [
+        -10.601,
+        16.667,
+        10.302
+      ],
+      "hi": [
+        9.911,
+        61.568,
+        12.389
+      ]
+    },
+    {
+      "material": "mat13",
+      "object": "body",
+      "obj": "ms_mat13.obj",
+      "texture": null,
+      "rgba": [
+        1.0,
+        0.082,
+        0.016,
+        1.0
+      ],
+      "faces": 4292,
+      "lo": [
+        -11.632,
+        -59.069,
+        6.431
+      ],
+      "hi": [
+        10.942,
+        54.034,
+        10.353
+      ]
+    },
+    {
+      "material": "mat12",
+      "object": "body",
+      "obj": "ms_mat12.obj",
+      "texture": null,
+      "rgba": [
+        0.604,
+        0.624,
+        0.659,
+        1.0
+      ],
+      "faces": 5934,
+      "lo": [
+        -13.618,
+        -42.148,
+        4.356
+      ],
+      "hi": [
+        12.267,
+        16.775,
+        12.652
+      ]
+    },
+    {
+      "material": "mat11",
+      "object": "body",
+      "obj": "ms_mat11.obj",
+      "texture": null,
+      "rgba": [
+        1.0,
+        0.835,
+        0.157,
+        1.0
+      ],
+      "faces": 136,
+      "lo": [
+        -7.728,
+        42.666,
+        4.412
+      ],
+      "hi": [
+        7.038,
+        51.847,
+        9.636
+      ]
+    },
+    {
+      "material": "fr",
+      "object": "body",
+      "obj": "ms_fr.obj",
+      "texture": "front.png",
+      "rgba": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "faces": 2,
+      "lo": [
+        6.986,
+        16.667,
+        12.929
+      ],
+      "hi": [
+        12.397,
+        16.667,
+        15.79
+      ]
+    },
+    {
+      "material": "wh",
+      "object": "body",
+      "obj": "ms_wh.obj",
+      "texture": null,
+      "rgba": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "faces": 3692,
+      "lo": [
+        -11.637,
+        -59.098,
+        6.405
+      ],
+      "hi": [
+        10.947,
+        34.391,
+        22.752
+      ]
+    },
+    {
+      "material": "red_grass",
+      "object": "body",
+      "obj": "ms_red_grass.obj",
+      "texture": null,
+      "rgba": [
+        0.561,
+        0.047,
+        0.02,
+        1.0
+      ],
+      "faces": 856,
+      "lo": [
+        7.594,
+        14.669,
+        12.376
+      ],
+      "hi": [
+        12.061,
+        17.209,
+        16.356
+      ]
+    },
+    {
+      "material": "mat10",
+      "object": "body",
+      "obj": "ms_mat10.obj",
+      "texture": null,
+      "rgba": [
+        0.651,
+        0.333,
+        0.0,
+        1.0
+      ],
+      "faces": 162,
+      "lo": [
+        7.662,
+        14.669,
+        15.628
+      ],
+      "hi": [
+        8.602,
+        14.849,
+        15.746
+      ]
+    },
+    {
+      "material": "steel",
+      "object": "body",
+      "obj": "ms_steel.obj",
+      "texture": null,
+      "rgba": [
+        0.788,
+        0.816,
+        0.863,
+        1.0
+      ],
+      "faces": 2848,
+      "lo": [
+        7.577,
+        14.068,
+        15.358
+      ],
+      "hi": [
+        9.998,
+        16.085,
+        16.376
+      ]
+    },
+    {
+      "material": "red",
+      "object": "body",
+      "obj": "ms_red.obj",
+      "texture": null,
+      "rgba": [
+        0.561,
+        0.047,
+        0.02,
+        1.0
+      ],
+      "faces": 804,
+      "lo": [
+        -6.858,
+        -68.778,
+        -5.21
+      ],
+      "hi": [
+        9.946,
+        14.721,
+        15.752
+      ]
+    },
+    {
+      "material": "mat2",
+      "object": "body",
+      "obj": "ms_mat2.obj",
+      "texture": null,
+      "rgba": [
+        0.141,
+        0.259,
+        0.369,
+        1.0
+      ],
+      "faces": 2616,
+      "lo": [
+        5.17,
+        -37.253,
+        11.332
+      ],
+      "hi": [
+        12.411,
+        12.774,
+        22.093
+      ]
+    },
+    {
+      "material": "dk",
+      "object": "body",
+      "obj": "ms_dk.obj",
+      "texture": "dk.png",
+      "rgba": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "faces": 192,
+      "lo": [
+        -7.795,
+        -65.038,
+        3.144
+      ],
+      "hi": [
+        14.076,
+        51.818,
+        11.553
+      ]
+    },
+    {
+      "material": "grass",
+      "object": "body",
+      "obj": "ms_grass.obj",
+      "texture": "def_grass.png",
+      "rgba": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "faces": 306,
+      "lo": [
+        6.5,
+        -7.678,
+        9.205
+      ],
+      "hi": [
+        13.243,
+        16.673,
+        16.958
+      ]
+    },
+    {
+      "material": "sg_bl",
+      "object": "body",
+      "obj": "ms_sg_bl.obj",
+      "texture": null,
+      "rgba": [
+        0.055,
+        0.055,
+        0.055,
+        1.0
+      ],
+      "faces": 15930,
+      "lo": [
+        -12.512,
+        -68.712,
+        -5.422
+      ],
+      "hi": [
+        13.197,
+        54.191,
+        16.137
+      ]
+    },
+    {
+      "material": "main",
+      "object": "body",
+      "obj": "ms_main.obj",
+      "texture": "def.png",
+      "rgba": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "faces": 4396,
+      "lo": [
+        -12.425,
+        -8.107,
+        3.877
+      ],
+      "hi": [
+        14.117,
+        61.337,
+        15.79
+      ]
+    },
+    {
+      "material": "brass",
+      "object": "body",
+      "obj": "ms_brass.obj",
+      "texture": "brass.png",
+      "rgba": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "faces": 108,
+      "lo": [
+        -8.26,
+        -64.517,
+        -5.159
+      ],
+      "hi": [
+        7.57,
+        -63.892,
+        -1.609
+      ]
+    },
+    {
+      "material": "deck",
+      "object": "body",
+      "obj": "ms_deck.obj",
+      "texture": "deck.png",
+      "rgba": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "faces": 5570,
+      "lo": [
+        -15.202,
+        -68.74,
+        2.453
+      ],
+      "hi": [
+        14.512,
+        51.938,
+        12.549
+      ]
+    },
+    {
+      "material": "side2",
+      "object": "body",
+      "obj": "ms_side2.obj",
+      "texture": "r.png",
+      "rgba": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "faces": 25,
+      "lo": [
+        -12.93,
+        35.109,
+        3.491
+      ],
+      "hi": [
+        -8.898,
+        56.989,
+        11.531
+      ]
+    },
+    {
+      "material": "side",
+      "object": "body",
+      "obj": "ms_side.obj",
+      "texture": "r.png",
+      "rgba": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "faces": 83088,
+      "lo": [
+        -15.578,
+        -69.271,
+        -1.943
+      ],
+      "hi": [
+        14.888,
+        62.927,
+        22.015
+      ]
+    },
+    {
+      "material": "dk_mat",
+      "object": "body",
+      "obj": "ms_dk_mat.obj",
+      "texture": null,
+      "rgba": [
+        0.341,
+        0.341,
+        0.341,
+        1.0
+      ],
+      "faces": 9674,
+      "lo": [
+        -15.202,
+        -68.74,
+        -5.422
+      ],
+      "hi": [
+        14.512,
+        62.927,
+        16.462
+      ]
+    }
+  ]
+}

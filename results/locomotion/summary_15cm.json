@@ -1,0 +1,41 @@
+[
+  {
+    "policy": "moe_cts",
+    "scenario": "stairs",
+    "step_height": 0.15,
+    "fell": false,
+    "survived_s": 20.000000000000306,
+    "lin_vel_err": 0.10473727762954572,
+    "yaw_err": 0.06645911155994937,
+    "x_travel": 7.45822107211107,
+    "max_base_z": 1.2478116665873735,
+    "climbed_up": true,
+    "completed": true
+  },
+  {
+    "policy": "symmetry",
+    "scenario": "stairs",
+    "step_height": 0.15,
+    "fell": false,
+    "survived_s": 20.000000000000306,
+    "lin_vel_err": 0.07663406546697996,
+    "yaw_err": 0.060455535428215405,
+    "x_travel": 8.204958285984757,
+    "max_base_z": 1.247024043135415,
+    "climbed_up": true,
+    "completed": true
+  },
+  {
+    "policy": "himloco",
+    "scenario": "stairs",
+    "step_height": 0.15,
+    "fell": false,
+    "survived_s": 20.000000000000306,
+    "lin_vel_err": 0.43831616298390225,
+    "yaw_err": 0.03739888553438109,
+    "x_travel": 1.2426420885925031,
+    "max_base_z": 0.5322800032298802,
+    "climbed_up": false,
+    "completed": false
+  }
+]
