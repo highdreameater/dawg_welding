@@ -145,15 +145,19 @@ class Plan:
 
 
 # ----------------------------------------------------------------------------------------------- episode
-def run(robot, scenario, torch_mass, ctrl_torch_mass, render=True, viewer=False):
-    cfg = ROBOTS[robot]()
+def run(robot, scenario, torch_mass, ctrl_torch_mass, render=True, viewer=False, cfg=None, wbc_kw=None, wbc_hook=None,
+        label=None):
+    """cfg / wbc_kw / wbc_hook / label: overrides for tuning studies (sim/wbc_tuning_study.py); None = the tuned WBC."""
+    cfg = cfg or ROBOTS[robot]()
     plant = build_model(cfg, torch_mass=torch_mass)
     ctrl_model = build_model(cfg, torch_mass=ctrl_torch_mass)
     d = mujoco.MjData(plant)
     ix = Indexer(plant, cfg)
     initial_state(plant, d, ix)
     plan = Plan(scenario, cfg, ctrl_model, d.qpos.copy())
-    wbc = StanceWBC(ctrl_model, cfg, **cfg.wbc_gains)
+    wbc = StanceWBC(ctrl_model, cfg, **dict(cfg.wbc_gains, **(wbc_kw or {})))
+    if wbc_hook is not None:
+        wbc_hook(wbc)
     n = int(plan.T / DT)
 
     renderer = cam = None
@@ -199,7 +203,7 @@ def run(robot, scenario, torch_mass, ctrl_torch_mass, render=True, viewer=False)
                 mujoco.mjv_initGeom(scn.geoms[scn.ngeom], mujoco.mjtGeom.mjGEOM_SPHERE, [0.0045, 0, 0], p,
                                     np.eye(3).flatten(), np.array([1.0, 0.45, 0.05, 1], np.float32))
                 scn.ngeom += 1
-            frames.append(overlay(renderer.render(), robot, scenario, t, plan.phase(t), L, plan))
+            frames.append(overlay(renderer.render(), label or robot, scenario, t, plan.phase(t), L, plan))
     if v is not None:
         v.close()
     L = {k: np.array(x) for k, x in L.items()}
