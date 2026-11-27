@@ -1,0 +1,969 @@
+{
+  "tasks": {
+    "5.0": {
+      "u_range": [
+        0.0,
+        0.3
+      ],
+      "force_mean": 4.983267637943093,
+      "force_rms_err": 0.29646489813006327,
+      "force_p5_p95": [
+        4.47988060374745,
+        5.442535495610543
+      ],
+      "contact_lost": 0.0,
+      "base_drift_mm": 0.15940391432126216,
+      "wbc_qp_failures": 0,
+      "ik_margin": 0.13150372305999572,
+      "approach_wait_s": 0.0,
+      "true_dock_err_mm_deg": [
+        48.7435870516199,
+        2.7571248336334153
+      ]
+    },
+    "23.0": {
+      "u_range": [
+        0.0,
+        0.3
+      ],
+      "force_mean": 4.991446809777117,
+      "force_rms_err": 0.49006241574316584,
+      "force_p5_p95": [
+        4.195067019058348,
+        5.74173221558227
+      ],
+      "contact_lost": 0.0,
+      "base_drift_mm": 0.22605614572655885,
+      "wbc_qp_failures": 0,
+      "ik_margin": 0.11997805157910572,
+      "approach_wait_s": 0.0,
+      "true_dock_err_mm_deg": [
+        66.81553702676585,
+        5.033199713711988
+      ]
+    },
+    "7.0": {
+      "u_range": [
+        0.0,
+        0.4
+      ],
+      "force_mean": 5.013514165363264,
+      "force_rms_err": 0.5945561855127496,
+      "force_p5_p95": [
+        4.095960291651628,
+        6.060033387537063
+      ],
+      "contact_lost": 0.0,
+      "base_drift_mm": 0.19151546077951415,
+      "wbc_qp_failures": 0,
+      "ik_margin": 0.12519717640349462,
+      "approach_wait_s": 0.06,
+      "true_dock_err_mm_deg": [
+        7.576826288832338,
+        0.9804842663548347
+      ]
+    },
+    "37.0": {
+      "u_range": [
+        0.0,
+        0.24
+      ],
+      "force_mean": 4.9963148366860555,
+      "force_rms_err": 0.2641342557001948,
+      "force_p5_p95": [
+        4.49397584231825,
+        5.359631404948264
+      ],
+      "contact_lost": 0.0,
+      "base_drift_mm": 0.17666271384310597,
+      "wbc_qp_failures": 0,
+      "ik_margin": 0.15933924958259454,
+      "approach_wait_s": 0.0,
+      "true_dock_err_mm_deg": [
+        9.569154345273814,
+        1.7102298181209363
+      ]
+    }
+  },
+  "surveys": {
+    "5": {
+      "model": {
+        "kind": "thin-plate spline",
+        "points": 15423,
+        "cells": 1099,
+        "coverage": 0.9996094131432477,
+        "area_coverage": 1.0,
+        "depth_range_mm": [
+          -8.900594756570401,
+          33.11056318706728
+        ]
+      },
+      "accuracy": {
+        "depth_rms_mm": 0.1344474108614967,
+        "depth_max_mm": 0.4502225620706072,
+        "normal_rms_deg": 0.6459489174341642,
+        "normal_max_deg": 1.5880716753958437
+      },
+      "standoff": 0.67,
+      "reach_table": [
+        [
+          0.55,
+          0.0
+        ],
+        [
+          0.58,
+          0.3
+        ],
+        [
+          0.61,
+          0.3
+        ],
+        [
+          0.64,
+          0.3
+        ],
+        [
+          0.67,
+          0.3
+        ],
+        [
+          0.7,
+          0.27
+        ],
+        [
+          0.73,
+          0.21
+        ],
+        [
+          0.76,
+          0.12
+        ],
+        [
+          0.79,
+          0.0
+        ],
+        [
+          0.82,
+          0.0
+        ],
+        [
+          0.85,
+          0.0
+        ],
+        [
+          0.88,
+          0.0
+        ],
+        [
+          0.91,
+          0.0
+        ],
+        [
+          0.94,
+          0.0
+        ]
+      ],
+      "patches": [
+        [
+          0.0,
+          0.3
+        ]
+      ]
+    },
+    "23": {
+      "model": {
+        "kind": "thin-plate spline",
+        "points": 12318,
+        "cells": 769,
+        "coverage": 0.9997162718116045,
+        "area_coverage": 1.0,
+        "depth_range_mm": [
+          36.41755253366792,
+          62.77761218105939
+        ]
+      },
+      "accuracy": {
+        "depth_rms_mm": 0.16416605152913927,
+        "depth_max_mm": 0.8302894570166239,
+        "normal_rms_deg": 1.3822491871787252,
+        "normal_max_deg": 7.0042168842917665
+      },
+      "standoff": 0.7,
+      "reach_table": [
+        [
+          0.55,
+          0.0
+        ],
+        [
+          0.58,
+          0.0
+        ],
+        [
+          0.61,
+          0.0
+        ],
+        [
+          0.64,
+          0.3
+        ],
+        [
+          0.67,
+          0.3
+        ],
+        [
+          0.7,
+          0.3
+        ],
+        [
+          0.73,
+          0.03
+        ],
+        [
+          0.76,
+          0.0
+        ],
+        [
+          0.79,
+          0.0
+        ],
+        [
+          0.82,
+          0.0
+        ],
+        [
+          0.85,
+          0.0
+        ],
+        [
+          0.88,
+          0.0
+        ],
+        [
+          0.91,
+          0.0
+        ],
+        [
+          0.94,
+          0.0
+        ]
+      ],
+      "patches": [
+        [
+          0.0,
+          0.3
+        ]
+      ]
+    },
+    "7": {
+      "model": {
+        "kind": "thin-plate spline",
+        "points": 20681,
+        "cells": 1395,
+        "coverage": 0.9995495833646123,
+        "area_coverage": 1.0,
+        "depth_range_mm": [
+          24.817736532301673,
+          70.84064778930865
+        ]
+      },
+      "accuracy": {
+        "depth_rms_mm": 0.1535545134394826,
+        "depth_max_mm": 0.5110273535015863,
+        "normal_rms_deg": 0.8724147609795757,
+        "normal_max_deg": 2.441191932030081
+      },
+      "standoff": 0.73,
+      "reach_table": [
+        [
+          0.55,
+          0.0
+        ],
+        [
+          0.58,
+          0.16
+        ],
+        [
+          0.61,
+          0.16
+        ],
+        [
+          0.64,
+          0.19
+        ],
+        [
+          0.67,
+          0.19
+        ],
+        [
+          0.7,
+          0.4
+        ],
+        [
+          0.73,
+          0.4
+        ],
+        [
+          0.76,
+          0.25
+        ],
+        [
+          0.79,
+          0.09
+        ],
+        [
+          0.82,
+          0.0
+        ],
+        [
+          0.85,
+          0.0
+        ],
+        [
+          0.88,
+          0.0
+        ],
+        [
+          0.91,
+          0.0
+        ],
+        [
+          0.94,
+          0.0
+        ]
+      ],
+      "patches": [
+        [
+          0.0,
+          0.4
+        ]
+      ]
+    },
+    "37": {
+      "model": {
+        "kind": "thin-plate spline",
+        "points": 13308,
+        "cells": 810,
+        "coverage": 1.0,
+        "area_coverage": 1.0,
+        "depth_range_mm": [
+          55.7008069540055,
+          81.57092751326753
+        ]
+      },
+      "accuracy": {
+        "depth_rms_mm": 0.09857380185090928,
+        "depth_max_mm": 0.35239447710221083,
+        "normal_rms_deg": 0.6506698393597786,
+        "normal_max_deg": 1.743432435978191
+      },
+      "standoff": 0.7,
+      "reach_table": [
+        [
+          0.55,
+          0.0
+        ],
+        [
+          0.58,
+          0.24
+        ],
+        [
+          0.61,
+          0.24
+        ],
+        [
+          0.64,
+          0.24
+        ],
+        [
+          0.67,
+          0.24
+        ],
+        [
+          0.7,
+          0.24
+        ],
+        [
+          0.73,
+          0.15
+        ],
+        [
+          0.76,
+          0.0
+        ],
+        [
+          0.79,
+          0.0
+        ],
+        [
+          0.82,
+          0.0
+        ],
+        [
+          0.85,
+          0.0
+        ],
+        [
+          0.88,
+          0.0
+        ],
+        [
+          0.91,
+          0.0
+        ],
+        [
+          0.94,
+          0.0
+        ]
+      ],
+      "patches": [
+        [
+          0.0,
+          0.24
+        ]
+      ]
+    }
+  },
+  "markers": {},
+  "orders": [],
+  "banner": "TASK COMPLETE: all 4 markers worked, order [5, 23, 7, 37]",
+  "strategy": "work_as_found",
+  "order_found": [
+    5,
+    23,
+    7,
+    37
+  ],
+  "order_worked": [
+    5,
+    23,
+    7,
+    37
+  ],
+  "marker_results": {
+    "5": {
+      "status": "done",
+      "attempt": 1,
+      "patches": {
+        "5.0": "done"
+      },
+      "approach_s": 5.1,
+      "survey_s": 2.4,
+      "time_s": 104.2
+    },
+    "23": {
+      "status": "done",
+      "attempt": 1,
+      "patches": {
+        "23.0": "done"
+      },
+      "approach_s": 14.5,
+      "survey_s": 2.4,
+      "time_s": 99.3
+    },
+    "7": {
+      "status": "done",
+      "attempt": 1,
+      "patches": {
+        "7.0": "done"
+      },
+      "approach_s": 10.6,
+      "survey_s": 2.4,
+      "time_s": 130.5
+    },
+    "37": {
+      "status": "done",
+      "attempt": 1,
+      "patches": {
+        "37.0": "done"
+      },
+      "approach_s": 11.6,
+      "survey_s": 2.4,
+      "time_s": 90.6
+    }
+  },
+  "decisions": [
+    [
+      0.0,
+      "look",
+      null
+    ],
+    [
+      15.0,
+      "explore",
+      [
+        4.78,
+        0.52
+      ]
+    ],
+    [
+      47.9,
+      "work",
+      5
+    ],
+    [
+      155.5,
+      "work",
+      23
+    ],
+    [
+      258.4,
+      "explore",
+      [
+        7.18,
+        -0.08
+      ]
+    ],
+    [
+      282.5,
+      "explore",
+      [
+        2.38,
+        -0.68
+      ]
+    ],
+    [
+      316.5,
+      "explore",
+      [
+        0.88,
+        0.83
+      ]
+    ],
+    [
+      341.5,
+      "explore",
+      [
+        0.58,
+        -0.38
+      ]
+    ],
+    [
+      363.5,
+      "explore",
+      [
+        13.48,
+        0.52
+      ]
+    ],
+    [
+      425.3,
+      "work",
+      7
+    ],
+    [
+      559.4,
+      "look",
+      null
+    ],
+    [
+      574.9,
+      "explore",
+      [
+        19.18,
+        0.23
+      ]
+    ],
+    [
+      609.1,
+      "work",
+      37
+    ],
+    [
+      703.3,
+      "done",
+      "all markers handled"
+    ]
+  ],
+  "explore": {
+    "viewpoints": [
+      [
+        4.78,
+        0.52
+      ],
+      [
+        7.18,
+        -0.08
+      ],
+      [
+        2.38,
+        -0.68
+      ],
+      [
+        0.88,
+        0.83
+      ],
+      [
+        0.58,
+        -0.38
+      ],
+      [
+        13.48,
+        0.52
+      ],
+      [
+        19.18,
+        0.23
+      ]
+    ],
+    "n_explore": 7,
+    "n_look_around": 9,
+    "surface_looked_at": 0.39344262295081966
+  },
+  "paint": {
+    "5": {
+      "coverage": 1.0,
+      "force_mean": 4.9754246543884495,
+      "force_p5_p95": [
+        4.486414742495486,
+        5.4574165107702095
+      ],
+      "within_20pct": 0.9903703703703703,
+      "outside_target": 0.16615194564546015
+    },
+    "23": {
+      "coverage": 0.9882352941176471,
+      "force_mean": 4.969315712035896,
+      "force_p5_p95": [
+        4.183713545631859,
+        5.715914252935985
+      ],
+      "within_20pct": 0.9630952380952381,
+      "outside_target": 0.22365988909426987
+    },
+    "37": {
+      "coverage": 1.0,
+      "force_mean": 4.974819325993932,
+      "force_p5_p95": [
+        4.465839972146646,
+        5.319724432670744
+      ],
+      "within_20pct": 0.9958333333333333,
+      "outside_target": 0.1905564924114671
+    },
+    "7": {
+      "coverage": 1.0,
+      "force_mean": 4.910022836539528,
+      "force_p5_p95": [
+        4.050681977932685,
+        5.811323281292716
+      ],
+      "within_20pct": 0.9270315091210614,
+      "outside_target": 0.15150093808630394
+    }
+  },
+  "localisation": {
+    "err_max_m": 0.06765087462553564,
+    "err_mean_m": 0.008458677033231374,
+    "err_final_m": 0.008600840516718816,
+    "heading_err_max_deg": 0.9679195858463215,
+    "map_matching_updates": 682,
+    "marker_corrections": 1
+  },
+  "done": [
+    "5",
+    "23",
+    "7",
+    "37"
+  ],
+  "failed": [],
+  "aborted": null,
+  "sim_time_s": 704.8039999971573,
+  "wall_time_s": 1367.3651497364044,
+  "walking": {
+    "max_tilt_deg": 20.241123200147538,
+    "distance_m": 45.79968357110428
+  },
+  "events": [
+    {
+      "t": 0.0,
+      "msg": "patrol: 9 waypoints sampled from the map's free space"
+    },
+    {
+      "t": 0.0,
+      "msg": "start: work orders [5, 7, 23, 37], strategy work_as_found; map known, markers unknown"
+    },
+    {
+      "t": 0.0,
+      "msg": "[decide] nothing to work on, this spot not looked at -> look around"
+    },
+    {
+      "t": 15.0,
+      "msg": "look around: 360 deg, new markers [], surface looked at 0 %, localisation error 0 cm / 0.4 deg"
+    },
+    {
+      "t": 15.0,
+      "msg": "[decide] explore -> viewpoint [4.78 0.52] (unseen surface 43, 6.4 m)"
+    },
+    {
+      "t": 15.0,
+      "msg": "A* to explore: 6.4 m (9 ms)"
+    },
+    {
+      "t": 39.4,
+      "msg": "marker 5 confirmed at [3.9  1.38 0.41] (est. frame)"
+    },
+    {
+      "t": 43.2,
+      "msg": "marker 23 confirmed at [ 4.96 -1.73  0.64] (est. frame)"
+    },
+    {
+      "t": 47.9,
+      "msg": "look around: 360 deg, new markers [5, 23], surface looked at 18 %, localisation error 0 cm / -0.2 deg"
+    },
+    {
+      "t": 47.9,
+      "msg": "[decide] work marker 5"
+    },
+    {
+      "t": 47.9,
+      "msg": "A* to [1 approach] marker 5: 1.6 m (2 ms)"
+    },
+    {
+      "t": 55.44,
+      "msg": "[2 survey] marker 5: surface model 1099 cells, depth -9..33 mm; vs real surface 0.1 mm / 0.6 deg RMS"
+    },
+    {
+      "t": 55.44,
+      "msg": "[3 plan reach] marker 5 (2.9 s): standoff 0.67 m, reachable 300 mm wide -> 1 patch(es) [0.3] m"
+    },
+    {
+      "t": 75.53,
+      "msg": "[4 dock] 5.0: at the stance 41 mm / 2.6 deg from the marker-relative dock"
+    },
+    {
+      "t": 75.53,
+      "msg": "area 5.0: hand-off, true dock error 49 mm / 2.8 deg (odometry vs truth 14 mm / -0.2 deg); 0.30 x 0.16 m, 17 raster segments, IK margin 0.13, 77 s"
+    },
+    {
+      "t": 152.14,
+      "msg": "area 5.0 done: F 4.98 N (rms err 0.30, p5-p95 4.5-5.4), contact lost 0.0 %, base drift 0.2 mm"
+    },
+    {
+      "t": 152.14,
+      "msg": "[6 check] 5.0: ok"
+    },
+    {
+      "t": 152.14,
+      "msg": "[execute] marker 5: DONE in 104 s (1/4 worked)"
+    },
+    {
+      "t": 155.52,
+      "msg": "[decide] work marker 23"
+    },
+    {
+      "t": 155.52,
+      "msg": "A* to [1 approach] marker 23: 1.9 m (3 ms)"
+    },
+    {
+      "t": 165.86,
+      "msg": "[1 approach] marker 23: estimate refined on the way, pose moved 20 cm / 12 deg - re-plan"
+    },
+    {
+      "t": 165.86,
+      "msg": "A* to [1 approach] marker 23: 1.1 m (1 ms)"
+    },
+    {
+      "t": 172.4,
+      "msg": "[2 survey] marker 23: surface model 769 cells, depth 36..63 mm; vs real surface 0.2 mm / 1.4 deg RMS"
+    },
+    {
+      "t": 172.4,
+      "msg": "[3 plan reach] marker 23 (3.3 s): standoff 0.70 m, reachable 300 mm wide -> 1 patch(es) [0.3] m"
+    },
+    {
+      "t": 201.13,
+      "msg": "[4 dock] 23.0: at the stance 18 mm / 1.0 deg from the marker-relative dock"
+    },
+    {
+      "t": 201.13,
+      "msg": "area 23.0: hand-off, true dock error 67 mm / 5.0 deg (odometry vs truth 7 mm / 0.3 deg); 0.30 x 0.10 m, 11 raster segments, IK margin 0.12, 54 s"
+    },
+    {
+      "t": 254.85,
+      "msg": "area 23.0 done: F 4.99 N (rms err 0.49, p5-p95 4.2-5.7), contact lost 0.0 %, base drift 0.2 mm"
+    },
+    {
+      "t": 254.85,
+      "msg": "[6 check] 23.0: ok"
+    },
+    {
+      "t": 254.85,
+      "msg": "[execute] marker 23: DONE in 99 s (2/4 worked)"
+    },
+    {
+      "t": 258.45,
+      "msg": "[decide] explore -> viewpoint [ 7.18 -0.08] (unseen surface 20, 1.9 m)"
+    },
+    {
+      "t": 258.45,
+      "msg": "A* to explore: 1.9 m (3 ms)"
+    },
+    {
+      "t": 282.51,
+      "msg": "look around: 360 deg, new markers [], surface looked at 24 %, localisation error 0 cm / 0.0 deg"
+    },
+    {
+      "t": 282.51,
+      "msg": "[decide] explore -> viewpoint [ 2.38 -0.68] (unseen surface 15, 4.6 m)"
+    },
+    {
+      "t": 282.51,
+      "msg": "A* to explore: 4.6 m (12 ms)"
+    },
+    {
+      "t": 316.51,
+      "msg": "look around: 360 deg, new markers [], surface looked at 25 %, localisation error 0 cm / 0.2 deg"
+    },
+    {
+      "t": 316.51,
+      "msg": "[decide] explore -> viewpoint [0.88 0.83] (unseen surface 13, 1.8 m)"
+    },
+    {
+      "t": 316.51,
+      "msg": "A* to explore: 2.4 m (12 ms)"
+    },
+    {
+      "t": 341.49,
+      "msg": "look around: 360 deg, new markers [], surface looked at 25 %, localisation error 0 cm / -0.1 deg"
+    },
+    {
+      "t": 341.49,
+      "msg": "[decide] explore -> viewpoint [ 0.58 -0.38] (unseen surface 6, 1.1 m)"
+    },
+    {
+      "t": 341.49,
+      "msg": "A* to explore: 1.3 m (6 ms)"
+    },
+    {
+      "t": 363.53,
+      "msg": "look around: 361 deg, new markers [], surface looked at 25 %, localisation error 0 cm / -0.1 deg"
+    },
+    {
+      "t": 363.53,
+      "msg": "[decide] explore -> viewpoint [13.48  0.52] (unseen surface 30, 15.0 m)"
+    },
+    {
+      "t": 363.53,
+      "msg": "A* to explore: 14.3 m via stairs (41 ms)"
+    },
+    {
+      "t": 392.31,
+      "msg": "stairs landmark: first riser crossed -> position along the corridor corrected by -2 cm"
+    },
+    {
+      "t": 399.43,
+      "msg": "marker 7 confirmed at [14.52 -2.39  0.41] (est. frame)"
+    },
+    {
+      "t": 425.33,
+      "msg": "look around: 361 deg, new markers [], surface looked at 33 %, localisation error 0 cm / 0.2 deg"
+    },
+    {
+      "t": 425.33,
+      "msg": "[decide] work marker 7"
+    },
+    {
+      "t": 425.33,
+      "msg": "A* to [1 approach] marker 7: 2.2 m (2 ms)"
+    },
+    {
+      "t": 438.31,
+      "msg": "[2 survey] marker 7: surface model 1395 cells, depth 25..71 mm; vs real surface 0.2 mm / 0.9 deg RMS"
+    },
+    {
+      "t": 438.31,
+      "msg": "[3 plan reach] marker 7 (4.3 s): standoff 0.73 m, reachable 400 mm wide -> 1 patch(es) [0.4] m"
+    },
+    {
+      "t": 462.15,
+      "msg": "[4 dock] 7.0: at the stance 7 mm / 1.0 deg from the marker-relative dock"
+    },
+    {
+      "t": 462.15,
+      "msg": "area 7.0: hand-off, true dock error 8 mm / 1.0 deg (odometry vs truth 13 mm / -0.1 deg); 0.40 x 0.16 m, 17 raster segments, IK margin 0.13, 94 s"
+    },
+    {
+      "t": 555.86,
+      "msg": "area 7.0 done: F 5.01 N (rms err 0.59, p5-p95 4.1-6.1), contact lost 0.0 %, base drift 0.2 mm"
+    },
+    {
+      "t": 555.86,
+      "msg": "[6 check] 7.0: ok"
+    },
+    {
+      "t": 555.86,
+      "msg": "[execute] marker 7: DONE in 130 s (3/4 worked)"
+    },
+    {
+      "t": 559.44,
+      "msg": "[decide] nothing to work on, this spot not looked at -> look around"
+    },
+    {
+      "t": 574.88,
+      "msg": "look around: 361 deg, new markers [], surface looked at 34 %, localisation error 0 cm / 0.1 deg"
+    },
+    {
+      "t": 574.88,
+      "msg": "[decide] explore -> viewpoint [19.18  0.23] (unseen surface 29, 4.7 m)"
+    },
+    {
+      "t": 574.88,
+      "msg": "A* to explore: 5.1 m (19 ms)"
+    },
+    {
+      "t": 602.83,
+      "msg": "marker 37 confirmed at [18.2  -1.19  0.42] (est. frame)"
+    },
+    {
+      "t": 609.1,
+      "msg": "look around: 360 deg, new markers [37], surface looked at 38 %, localisation error 0 cm / 0.1 deg"
+    },
+    {
+      "t": 609.1,
+      "msg": "[decide] work marker 37"
+    },
+    {
+      "t": 609.1,
+      "msg": "A* to [1 approach] marker 37: 1.4 m (2 ms)"
+    },
+    {
+      "t": 623.08,
+      "msg": "[2 survey] marker 37: surface model 810 cells, depth 56..82 mm; vs real surface 0.1 mm / 0.7 deg RMS"
+    },
+    {
+      "t": 623.08,
+      "msg": "[3 plan reach] marker 37 (2.4 s): standoff 0.70 m, reachable 240 mm wide -> 1 patch(es) [0.24] m"
+    },
+    {
+      "t": 634.78,
+      "msg": "[4 dock] 37.0: at the stance 17 mm / 1.7 deg from the marker-relative dock"
+    },
+    {
+      "t": 634.78,
+      "msg": "area 37.0: hand-off, true dock error 10 mm / 1.7 deg (odometry vs truth 9 mm / -0.3 deg); 0.24 x 0.14 m, 17 raster segments, IK margin 0.16, 65 s"
+    },
+    {
+      "t": 699.72,
+      "msg": "area 37.0 done: F 5.00 N (rms err 0.26, p5-p95 4.5-5.4), contact lost 0.0 %, base drift 0.2 mm"
+    },
+    {
+      "t": 699.72,
+      "msg": "[6 check] 37.0: ok"
+    },
+    {
+      "t": 699.72,
+      "msg": "[execute] marker 37: DONE in 91 s (4/4 worked)"
+    },
+    {
+      "t": 703.3,
+      "msg": "[decide] done: all markers handled"
+    },
+    {
+      "t": 703.3,
+      "msg": "TASK COMPLETE: all 4 markers worked, order [5, 23, 7, 37]"
+    }
+  ],
+  "policy": "moe_cts",
+  "seed": 3,
+  "panel_seed": 4
+}

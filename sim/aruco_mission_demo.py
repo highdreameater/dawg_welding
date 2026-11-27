@@ -93,10 +93,16 @@ class Task:
 
 
 class Mission:
+    # what a mission variant overrides (sim/curved_mission.py): the world, its work orders, the printed marker size
+    work_orders = WORK_ORDERS
+    marker_size = MARKER_SIZE
+
+    def make_world(self, args):
+        return aruco_world(decimate=args.terrain_decimate, pipe_radius=tuple(args.pipe_radius), panel_seed=args.panel_seed)
+
     def __init__(self, args):
         self.args = args
-        self.world = aruco_world(decimate=args.terrain_decimate, pipe_radius=tuple(args.pipe_radius),
-                                 panel_seed=args.panel_seed)
+        self.world = self.make_world(args)
         self.cfg = ROBOTS["go2_z1_official"]()
         self.m = build_model(self.cfg, torch_mass=0.0, world=self.world, contact_tip=True, scene_fn=add_head_camera,
                              render_size=(1280, 720))
@@ -118,9 +124,9 @@ class Mission:
         self.odo = Odometry((x, y), yaw, seed=args.seed)
         self.pol = BlindPolicy(self.m, self.cfg, args.policy)
         self.planner = PortalPlanner(self.world)
-        self.rgb = ArucoCamera(self.m, MARKER_SIZE)
+        self.rgb = ArucoCamera(self.m, self.marker_size)
         self.depth = DepthCamera(self.m, DEPTH_MOUNT, hfov_deg=DEPTH_HFOV, vfov_deg=DEPTH_VFOV, seed=args.seed)
-        self.markers = MarkerMap(WORK_ORDERS.keys())
+        self.markers = MarkerMap(self.work_orders.keys())
         self.sensor = ForceSensor(self.m)
         self.pending, self.done, self.failed, self.queue, self.last_obs = {}, [], [], [], []
         self.reloc_on = True          # global landmark re-localisation (navigation); paused while docking on a marker
@@ -134,18 +140,17 @@ class Mission:
 
     # ------------------------------------------------------------------ ground truth (drawing + scoring only)
     def _true_frame(self, mid):
-        mk = next(t.marker for t in self.world.tasks if t.marker.id == mid)
-        wo = WORK_ORDERS[mid]
-        return area_frame(np.asarray(mk.pos), mk.frame(), wo["area_offset"], wo["area_size"])
+        pos, R = self.world.true_marker(mid)
+        wo = self.work_orders[mid]
+        return area_frame(pos, R, wo["area_offset"], wo["area_size"])
 
     def _make_canvases(self):
         cv = {}
-        for t in self.world.tasks:
-            mid = t.marker.id
+        for mid in self.work_orders:
             f, mg = self._true_frame(mid), 0.08
             cv[mid] = SurfaceCanvas(self.m, self.d, f.o - mg * f.ex - mg * f.ey, f.ex, f.ey, f.ez,
                                     (f.W + 2 * mg, f.H + 2 * mg), (mg, mg, mg + f.W, mg + f.H), cell=0.006,
-                                    color=WORK_ORDERS[mid]["color"])
+                                    color=self.work_orders[mid]["color"])
         return cv
 
     def log(self, msg):
@@ -175,7 +180,7 @@ class Mission:
 
     def frame_est(self, mid):
         p, R = self.markers.pose(mid)
-        wo = WORK_ORDERS[mid]
+        wo = self.work_orders[mid]
         return area_frame(p, R, wo["area_offset"], wo["area_size"])
 
     def fresh_frame(self, mid, T=1.0, fallback=None):
@@ -205,14 +210,14 @@ class Mission:
             R = np.stack([np.cross([0, 0, 1.0], n), [0, 0, 1.0], n], 1)
         elif not any(o.rot_ok for o in seen):         # face-on PnP ambiguity in every view: orientation from the anchor
             R = self.markers.pose(mid)[1]
-        wo = WORK_ORDERS[mid]
+        wo = self.work_orders[mid]
         return area_frame(p, R, wo["area_offset"], wo["area_size"])
 
     def refine_on_plate(self, f, mid, pts):
         """Marker too close for the RGB camera to decode, but the depth camera still sees its flat plate: re-measure the
         plate plane (normal + distance along it) from the depth points around where the frame `f` puts the marker.
         Removes the depth and normal error the last blind odometry step adds; lateral stays from `f`."""
-        wo = WORK_ORDERS[mid]
+        wo = self.work_orders[mid]
         p = f.o - (wo["area_offset"][0] - f.W / 2) * f.ex - (wo["area_offset"][1] - f.H / 2) * f.ey
         n = plate_normal(pts, p, f.ez)
         if n is None:
@@ -672,7 +677,7 @@ class Mission:
     def run(self):
         if not self.args.explore:
             return self.run_sites()
-        self.log(f"start: work orders {sorted(WORK_ORDERS)}, map known, marker positions + surfaces unknown")
+        self.log(f"start: work orders {sorted(self.work_orders)}, map known, marker positions + surfaces unknown")
         self.look_around()
         while True:
             if self.pending:
@@ -689,7 +694,7 @@ class Mission:
                     (self.done if r == "done" else self.failed).append(task.key)
                     self.reorder()
                 continue
-            if len(self.markers.confirmed) == len(WORK_ORDERS) or not self.patrol:
+            if len(self.markers.confirmed) == len(self.work_orders) or not self.patrol:
                 break
             w = self.patrol.pop(0)
             xy, _ = self.pose()
@@ -811,10 +816,11 @@ def plot_map(ms, path_png):
     if len(tr):
         ax.plot(tr[:, 0], tr[:, 1], "-", color="#1f6feb", lw=1.2, label="walked (true)")
         ax.plot(est[:, 0], est[:, 1], ":", color="#cf222e", lw=1.0, label="walked (robot's estimate)")
+    for mid in ms.work_orders:
+        pos, _ = w.true_marker(mid)
+        ax.plot(pos[0], pos[1], "ks", ms=6)
+        ax.annotate(f" {mid}", pos[:2], fontsize=8)
     for t in w.tasks:
-        mk = t.marker
-        ax.plot(mk.pos[0], mk.pos[1], "ks", ms=6)
-        ax.annotate(f" {mk.id}", mk.pos[:2], fontsize=8)
         if t.pipe is not None:
             ax.add_patch(plt.Circle(t.pipe.xy, t.pipe.radius, color="k", fill=False))
     ax.plot([], [], "ks", label="marker (true)")

@@ -18,3 +18,33 @@ assets/dockyard/generated/
 # myscene: source .blend is 646 MB (over the GitHub file limit) + raw Blender export; converted meshes are kept
 assets/myscene.blend
 assets/myscene_export/raw/
+
+# merge leftovers / editor backups
+*.theirs
+*.orig
+*.rej
+
+# LaTeX build files (slides)
+docs/presentation/*.aux
+docs/presentation/*.log
+docs/presentation/*.nav
+docs/presentation/*.out
+docs/presentation/*.snm
+docs/presentation/*.toc
+docs/presentation/*.synctex.gz
+
+# videos that are too large for GitHub (>100 MB) or superseded by later versions.
+# The README uses the GIFs in docs/media/ instead.
+results/curved_mission/*.mp4
+results/aruco_mission/mission.mp4
+results/aruco_mission/mission_v[0-7].mp4
+
+# side experiments (dockyard / custom scenes): keep the stills, not the videos
+results/dockyard/*.mp4
+results/myscene/*.mp4
+results/scene_terrain/*.mp4
+
+# locomotion: keep only the runs with the arm on board and the 15 cm stairs
+results/locomotion/*.mp4
+!results/locomotion/*_arm.mp4
+!results/locomotion/*_15cm.mp4

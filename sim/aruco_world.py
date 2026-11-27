@@ -343,6 +343,11 @@ class ArucoWorld:
             arm.pos, arm.quat, arm.rgba, arm.group = list(p - 0.03 * n), q, [0.25, 0.25, 0.27, 1], 1
             arm.contype = arm.conaffinity = 0
 
+    def true_marker(self, mid):
+        """Ground truth (scene drawing + scoring only): marker centre and frame (columns x right, y up, z out)."""
+        mk = next(t.marker for t in self.tasks if t.marker.id == mid)
+        return np.asarray(mk.pos, float), mk.frame()
+
     # ------------------------------------------------------------------ map (what the robot knows)
     def footprints(self):
         """Obstacle footprints for the occupancy grid. Stairs are NOT here: they are a portal (task_planner)."""
